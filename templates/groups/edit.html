@@ -108,6 +108,19 @@
                 </button>
             </div>
         </form>
+
+
+    </div>
+
+    <div class="mt-6 bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold">Delete Group</h2>
+        <p class="text-gray-600">Once you delete a group, there is no going back. Please be certain.</p>
+        <form action="{{ url_for('delete_group', group_id=group.id) }}" method="POST" class="mt-4">
+            <button type="submit"
+                    class="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                Delete Group
+            </button>
+        </form>
     </div>
 </div>
 
