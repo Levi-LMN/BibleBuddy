@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">User Management</h1>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-100 border-b">
+                <tr>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Streak</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for user in users.items %}
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 whitespace-nowrap text-sm text-gray-500">{{ user.id }}</td>
+                    <td class="p-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.name }}</td>
+                    <td class="p-3 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
+                    <td class="p-3 whitespace-nowrap text-sm text-gray-500">{{ user.preferred_version }}</td>
+                    <td class="p-3 whitespace-nowrap text-sm text-gray-500">{{ user.streak }}</td>
+                    <td class="p-3 whitespace-nowrap text-sm font-medium">
+                        <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                        <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" class="inline">
+                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between">
+        <div class="flex space-x-2">
+            {% if users.has_prev %}
+                <a href="{{ url_for('admin_users', page=users.prev_num) }}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                    Previous
+                </a>
+            {% endif %}
+            {% if users.has_next %}
+                <a href="{{ url_for('admin_users', page=users.next_num) }}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                    Next
+                </a>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

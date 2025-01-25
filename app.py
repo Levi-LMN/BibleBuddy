@@ -643,7 +643,7 @@ def profile():
     ).filter_by(user_id=current_user.id).group_by(Reading.bible_version).all()
 
     group_stats = GroupMember.query.filter_by(user_id=current_user.id).options(
-        db.joinedload(GroupMember.group)
+        db.joinedload(GroupMember.reading_group)  # Change 'group' to 'reading_group'
     ).all()
 
     return render_template('profile.html',
@@ -900,6 +900,205 @@ def error_page():
     # Generate a unique error ID for tracking
     error_id = str(uuid.uuid4())  # You can replace this with your preferred error ID generation logic
     return render_template("500.html", error_id=error_id)
+
+
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required
+from sqlalchemy import func
+
+
+# Add this to your existing routes
+
+from functools import wraps
+from flask import flash, redirect, url_for
+from flask_login import current_user
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.email.lower() != 'mukuhalevi@gmail.com'.lower():
+            flash('You do not have permission to access the admin panel.')
+            return redirect(url_for('home'))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+
+@app.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    # User statistics
+    total_users = User.query.count()
+    users_by_version = db.session.query(
+        User.preferred_version,
+        func.count(User.id)
+    ).group_by(User.preferred_version).all()
+
+    # Reading statistics
+    total_readings = Reading.query.count()
+    readings_by_version = db.session.query(
+        Reading.bible_version,
+        func.count(Reading.id)
+    ).group_by(Reading.bible_version).all()
+
+    # Group statistics
+    total_groups = ReadingGroup.query.count()
+    groups_by_visibility = db.session.query(
+        ReadingGroup.visibility,
+        func.count(ReadingGroup.id)
+    ).group_by(ReadingGroup.visibility).all()
+
+    return render_template('admin/admin_dashboard.html',
+                           total_users=total_users,
+                           users_by_version=users_by_version,
+                           total_readings=total_readings,
+                           readings_by_version=readings_by_version,
+                           total_groups=total_groups,
+                           groups_by_visibility=groups_by_visibility)
+
+
+@app.route('/admin/users')
+@login_required
+@admin_required
+def admin_users():
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    users = User.query.paginate(page=page, per_page=per_page, error_out=False)
+    return render_template('admin/users.html', users=users)
+
+
+@app.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        user.name = request.form.get('name')
+        user.email = request.form.get('email')
+        user.preferred_version = request.form.get('preferred_version')
+
+        # Optional: Reset streak or last read date
+        if request.form.get('reset_streak'):
+            user.streak = 0
+            user.last_read_date = None
+
+        db.session.commit()
+        flash('User updated successfully.')
+        return redirect(url_for('admin_users'))
+
+    return render_template('admin/edit_user.html', user=user)
+
+
+@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    try:
+        # Delete associated readings, group memberships, etc.
+        Reading.query.filter_by(user_id=user_id).delete()
+        GroupMember.query.filter_by(user_id=user_id).delete()
+        GroupReading.query.filter_by(user_id=user_id).delete()
+
+        # Delete user
+        db.session.delete(user)
+        db.session.commit()
+
+        flash('User and associated data deleted successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting user: {str(e)}')
+
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/groups')
+@login_required
+@admin_required
+def admin_groups():
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    groups = ReadingGroup.query.paginate(page=page, per_page=per_page, error_out=False)
+    return render_template('admin/groups.html', groups=groups)
+
+
+@app.route('/admin/groups/<int:group_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_group(group_id):
+    group = ReadingGroup.query.get_or_404(group_id)
+
+    if request.method == 'POST':
+        group.name = request.form.get('name')
+        group.description = request.form.get('description')
+        group.book = request.form.get('book')
+        group.visibility = request.form.get('visibility')
+
+        # Update target completion date
+        target_date = request.form.get('target_date')
+        if target_date:
+            group.target_completion_date = datetime.strptime(target_date, '%Y-%m-%d')
+
+        db.session.commit()
+        flash('Group updated successfully.')
+        return redirect(url_for('admin_groups'))
+
+    return render_template('admin/edit_group.html', group=group)
+
+
+@app.route('/admin/groups/<int:group_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_group(group_id):
+    group = ReadingGroup.query.get_or_404(group_id)
+
+    try:
+        # Delete associated group members, readings, and invitations
+        GroupMember.query.filter_by(group_id=group_id).delete()
+        GroupReading.query.filter_by(group_id=group_id).delete()
+        GroupInvitation.query.filter_by(group_id=group_id).delete()
+
+        # Delete group
+        db.session.delete(group)
+        db.session.commit()
+
+        flash('Group and associated data deleted successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting group: {str(e)}')
+
+    return redirect(url_for('admin_groups'))
+
+
+@app.route('/admin/readings')
+@login_required
+@admin_required
+def admin_readings():
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    readings = Reading.query.order_by(Reading.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return render_template('admin/readings.html', readings=readings)
+
+
+@app.route('/admin/readings/<int:reading_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_reading(reading_id):
+    reading = Reading.query.get_or_404(reading_id)
+
+    try:
+        db.session.delete(reading)
+        db.session.commit()
+        flash('Reading deleted successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting reading: {str(e)}')
+
+    return redirect(url_for('admin_readings'))
 
 if __name__ == '__main__':
     with app.app_context():

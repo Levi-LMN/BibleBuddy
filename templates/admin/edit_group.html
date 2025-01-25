@@ -1,0 +1,53 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto p-6 max-w-md">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Edit Group</h1>
+    
+    <form method="POST" class="bg-white shadow-md rounded-lg p-8">
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="name">Name</label>
+            <input type="text" name="name" value="{{ group.name }}" 
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description</label>
+            <textarea name="description" 
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{{ group.description }}</textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="book">Book</label>
+            <input type="text" name="book" value="{{ group.book }}" 
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="visibility">Visibility</label>
+            <select name="visibility" 
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="public" {% if group.visibility == 'public' %}selected{% endif %}>Public</option>
+                <option value="private" {% if group.visibility == 'private' %}selected{% endif %}>Private</option>
+                <option value="invitation" {% if group.visibility == 'invitation' %}selected{% endif %}>Invitation Only</option>
+            </select>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="target_date">Target Completion Date</label>
+            <input type="date" name="target_date" 
+                value="{{ group.target_completion_date.strftime('%Y-%m-%d') if group.target_completion_date else '' }}"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Update Group
+            </button>
+            <a href="{{ url_for('admin_groups') }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
