@@ -1,220 +1,239 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="bg-white p-8 rounded-lg shadow-md mb-8">
-        <h2 class="text-2xl font-bold mb-6">Bible Reading</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- Bible Version Selection -->
-            <div>
-                <label class="block text-gray-700 mb-2">Version</label>
-                <select id="version" name="version" class="w-full px-3 py-2 border rounded">
-                    {% for version in versions %}
-                        <option value="{{ version }}" {% if version == selected_version %}selected{% endif %}>
-                            {{ version }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-gray-700 mb-2">Book</label>
-                <select id="book" class="w-full px-3 py-2 border rounded">
-                    {% for book, book_id in books.items() %}
-                        <option value="{{ book_id }}">{{ book }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-gray-700 mb-2">Chapter</label>
-                <select id="chapter" class="w-full px-3 py-2 border rounded">
-                    <option value="">Select a book first</option>
-                </select>
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen py-8">
+    <!-- Gradient Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg shadow-xl mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-white">Record Your Bible Reading</h1>
+        <p class="text-gray-200 opacity-90 max-w-xl">Track your spiritual journey and maintain your reading consistency</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Reading Selection Column (Left) -->
+        <div class="lg:col-span-1 order-2 lg:order-1 space-y-6">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-100 p-4 border-b flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-800">Reading Details</h2>
+                    <select id="version-select" class="border rounded px-3 py-2 text-sm bg-white">
+                        {% for version in versions %}
+                            <option value="{{ version }}" {% if version == selected_version %}selected{% endif %}>
+                                {{ version }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <form method="POST" class="p-6 space-y-4">
+                    <!-- Book Selection -->
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-semibold">Book</label>
+                        <select name="book" id="book-select" class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            {% for book, book_id in books.items() %}
+                                <option value="{{ book_id }}">{{ book }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Chapter Selection -->
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-semibold">Chapter</label>
+                        <select name="chapter" id="chapter-select" class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <!-- Chapters will be dynamically populated -->
+                        </select>
+                    </div>
+
+                    <!-- Chapter Preview Column (for mobile view) -->
+                    <div class="block lg:hidden">
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-4">
+                            <div class="bg-gray-100 p-4 border-b flex justify-between items-center">
+                                <h2 class="text-xl font-semibold text-gray-800">Chapter Preview</h2>
+                                <button type="button" id="toggle-chapter-content" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                    Show/Hide
+                                </button>
+                            </div>
+                            <div id="bible-content-mobile" class="p-6 bg-gray-50 prose max-w-none leading-relaxed">
+                                Select a book and chapter to preview the content.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Specific Verses (Optional) -->
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-semibold">Verses Read (optional)</label>
+                        <input type="text" name="verses" placeholder="e.g., 1-5, 7, 9-12"
+                               class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+
+                    <!-- Highlights or Notes -->
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-semibold">Personal Highlights/Notes</label>
+                        <textarea name="highlights" rows="4"
+                                  class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                  placeholder="Write down your insights, reflections, or key verses..."></textarea>
+                    </div>
+
+                    <!-- Hidden Version Input -->
+                    <input type="hidden" name="version" id="version-input" value="{{ selected_version }}">
+
+                    <!-- Submit Button -->
+                    <button type="submit"
+                            class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition transform hover:-translate-y-1 shadow-lg">
+                        Record Reading
+                    </button>
+                </form>
             </div>
         </div>
 
-        <!-- Toggle Button for Showing/Hiding Verses -->
-        <button id="toggle-visibility" class="w-full bg-gray-200 text-black py-2 rounded hover:bg-gray-300 mb-4">
-            Hide Verses
-        </button>
-
-        <!-- Loading Spinner -->
-        <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-50 flex justify-center items-center z-50" style="display: none;">
-            <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
-                <span class="text-blue-500 font-semibold">Loading...</span>
+        <!-- Bible Content Preview Column (Hidden on mobile, visible on large screens) -->
+        <div class="lg:col-span-2 order-1 lg:order-2 hidden lg:block space-y-6">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-100 p-4 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">Chapter Preview</h2>
+                    <button type="button" id="toggle-chapter-content-desktop" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                        Show/Hide
+                    </button>
+                </div>
+                <div id="bible-content-desktop" class="p-6 bg-gray-50 prose max-w-none leading-relaxed">
+                    Select a book and chapter to preview the content.
+                </div>
             </div>
         </div>
-
-        <!-- Bible Content -->
-        <div id="bible-content" class="prose max-w-none mb-8">
-            <p class="text-gray-600">Select a book and chapter to begin reading...</p>
-        </div>
-
-        <form method="POST" class="space-y-4">
-            <input type="hidden" name="version" id="selected-version">
-            <input type="hidden" name="book" id="selected-book">
-            <input type="hidden" name="chapter" id="selected-chapter">
-
-            <div>
-                <label class="block text-gray-700 mb-2">Verses Read (optional)</label>
-                <input type="text" name="verses" placeholder="e.g., 1-5, 7, 10-12" class="w-full px-3 py-2 border rounded">
-            </div>
-
-            <div>
-                <label class="block text-gray-700 mb-2">Highlights/Notes</label>
-                <textarea name="highlights" rows="4" class="w-full px-3 py-2 border rounded"></textarea>
-            </div>
-
-            <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-                Save Reading
-            </button>
-        </form>
     </div>
 </div>
 
 <script>
-// Helper function to show/hide loading spinner
-function toggleLoading(show) {
-    document.getElementById('loading-spinner').style.display = show ? 'flex' : 'none';
-}
-
-// Helper function to handle errors
-function handleError(error) {
-    console.error('Error:', error);
-    toggleLoading(false);
-    document.getElementById('bible-content').innerHTML = '<p class="text-red-500">Error loading content. Please try again.</p>';
-}
-
-// Initialize the form hidden fields
-function initializeFormFields() {
-    const versionSelect = document.getElementById('version');
-    const bookSelect = document.getElementById('book');
-    const chapterSelect = document.getElementById('chapter');
-
-    document.getElementById('selected-version').value = versionSelect.value;
-    document.getElementById('selected-book').value = bookSelect.value;
-    document.getElementById('selected-chapter').value = chapterSelect.value || '';
-}
-
-// Load chapters for selected book
-async function loadChapters(version, bookId) {
-    try {
-        const response = await fetch(`/get_chapters/${version}/${bookId}`);
-        if (!response.ok) throw new Error('Failed to load chapters');
-
-        const data = await response.json();
-        const chapterSelect = document.getElementById('chapter');
-        chapterSelect.innerHTML = '';
-
-        data.chapters.forEach(chapter => {
-            const option = document.createElement('option');
-            option.value = chapter;
-            option.textContent = chapter;
-            chapterSelect.appendChild(option);
-        });
-
-        // Select first chapter and load content
-        if (data.chapters.length > 0) {
-            chapterSelect.value = '1';
-            document.getElementById('selected-chapter').value = '1';
-            await loadBibleContent(version, bookId, 1);
-        }
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-// Load Bible content
-async function loadBibleContent(version, bookId, chapter) {
-    try {
-        toggleLoading(true);
-        const response = await fetch(`/get_content/${version}/${bookId}/${chapter}`);
-        if (!response.ok) throw new Error('Failed to load content');
-
-        const data = await response.json();
-        document.getElementById('bible-content').innerHTML = data.content;
-        document.getElementById('bible-content').style.display = 'block';
-        document.getElementById('toggle-visibility').textContent = 'Hide Verses';
-    } catch (error) {
-        handleError(error);
-    } finally {
-        toggleLoading(false);
-    }
-}
-
-// Event Listeners
-document.getElementById('version').addEventListener('change', async function() {
-    const version = this.value;
-    document.getElementById('selected-version').value = version;
-
-    // Reload the page with the new version
-    window.location.href = `/read?version=${version}`;
-});
-
-document.getElementById('book').addEventListener('change', async function() {
-    const bookId = this.value;
-    const version = document.getElementById('version').value;
-    document.getElementById('selected-book').value = bookId;
-
-    toggleLoading(true);
-    await loadChapters(version, bookId);
-    toggleLoading(false);
-});
-
-document.getElementById('chapter').addEventListener('change', async function() {
-    const bookId = document.getElementById('book').value;
-    const version = document.getElementById('version').value;
-    const chapter = this.value;
-
-    document.getElementById('selected-chapter').value = chapter;
-    await loadBibleContent(version, bookId, chapter);
-});
-
-document.getElementById('toggle-visibility').addEventListener('click', function() {
-    const content = document.getElementById('bible-content');
-    const button = document.getElementById('toggle-visibility');
-
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        button.textContent = 'Hide Verses';
-    } else {
-        content.style.display = 'none';
-        button.textContent = 'Show Verses';
-    }
-});
-
-// Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    initializeFormFields();
-    const bookSelect = document.getElementById('book');
-    if (bookSelect.value) {
-        bookSelect.dispatchEvent(new Event('change'));
+    const versionSelect = document.getElementById('version-select');
+    const bookSelect = document.getElementById('book-select');
+    const chapterSelect = document.getElementById('chapter-select');
+    const versionInput = document.getElementById('version-input');
+    const contentDivMobile = document.getElementById('bible-content-mobile');
+    const contentDivDesktop = document.getElementById('bible-content-desktop');
+    const toggleContentButtonMobile = document.getElementById('toggle-chapter-content');
+    const toggleContentButtonDesktop = document.getElementById('toggle-chapter-content-desktop');
+
+    function loadChapters() {
+        const version = versionSelect.value;
+        const book = bookSelect.value;
+
+        fetch(`/get_chapters/${version}/${book}`)
+            .then(response => response.json())
+            .then(data => {
+                chapterSelect.innerHTML = '';
+                data.chapters.forEach(chapter => {
+                    const option = document.createElement('option');
+                    option.value = chapter;
+                    option.textContent = `Chapter ${chapter}`;
+                    chapterSelect.appendChild(option);
+                });
+                loadBibleContent();
+            });
     }
+
+    function loadBibleContent() {
+        const version = versionSelect.value;
+        const book = bookSelect.options[bookSelect.selectedIndex].text;
+        const chapter = chapterSelect.value;
+
+        versionInput.value = version;
+        contentDivMobile.innerHTML = 'Loading...';
+        contentDivDesktop.innerHTML = 'Loading...';
+
+        fetch(`/get_content/${version}/${encodeURIComponent(book)}/${chapter}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.content) {
+                    contentDivMobile.innerHTML = 'Unable to load content';
+                    contentDivDesktop.innerHTML = 'Unable to load content';
+                    return;
+                }
+
+                // Enhanced parsing to improve readability
+                const formattedContent = data.content
+                    // Remove existing HTML tags
+                    .replace(/<\/?[^>]+(>|$)/g, "")
+                    // Split content preserving verse numbers
+                    .replace(/(\d+)/g, '|||$1|||')
+                    .split('|||')
+                    .map((part, index, arr) => {
+                        // Check if part is a verse number
+                        if (/^\d+$/.test(part)) {
+                            // Combine verse number with its text
+                            const text = arr[index + 1] || '';
+                            return `
+                                <div class="verse flex items-start mb-2">
+                                    <span class="verse-number font-bold text-blue-600 mr-2 min-w-[30px] text-right select-none">
+                                        ${part}
+                                    </span>
+                                    <span class="verse-text flex-1">
+                                        ${text.trim()}
+                                    </span>
+                                </div>
+                            `;
+                        }
+                        return ''; // Skip text-only parts
+                    })
+                    .filter(Boolean)
+                    .join('');
+
+                const chapterHeader = `
+                    <div class="chapter-header text-xl font-semibold text-gray-800 mb-4">
+                        ${book} Chapter ${chapter}
+                    </div>
+                    <div class="chapter-content">
+                        ${formattedContent}
+                    </div>
+                `;
+
+                // Update both mobile and desktop content divs
+                contentDivMobile.innerHTML = chapterHeader;
+                contentDivDesktop.innerHTML = chapterHeader;
+
+                // Add copy functionality to both
+                function addCopyButton(contentDiv) {
+                    const copyButton = document.createElement('button');
+                    copyButton.innerHTML = 'Copy Chapter';
+                    copyButton.className = 'mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600';
+                    copyButton.addEventListener('click', () => {
+                        const chapterText = Array.from(contentDiv.querySelectorAll('.verse'))
+                            .map(verse => {
+                                const number = verse.querySelector('.verse-number').textContent.trim();
+                                const text = verse.querySelector('.verse-text').textContent.trim();
+                                return `${number} ${text}`;
+                            })
+                            .join('\n');
+
+                        navigator.clipboard.writeText(chapterText).then(() => {
+                            alert('Chapter copied to clipboard!');
+                        });
+                    });
+
+                    contentDiv.appendChild(copyButton);
+                }
+
+                addCopyButton(contentDivMobile);
+                addCopyButton(contentDivDesktop);
+            })
+            .catch(error => {
+                contentDivMobile.innerHTML = 'Error loading content. Please try again.';
+                contentDivDesktop.innerHTML = 'Error loading content. Please try again.';
+            });
+    }
+
+    // Toggle chapter content visibility for mobile
+    toggleContentButtonMobile.addEventListener('click', () => {
+        contentDivMobile.classList.toggle('hidden');
+    });
+
+    // Toggle chapter content visibility for desktop
+    toggleContentButtonDesktop.addEventListener('click', () => {
+        contentDivDesktop.classList.toggle('hidden');
+    });
+
+    bookSelect.addEventListener('change', loadChapters);
+    versionSelect.addEventListener('change', loadChapters);
+    chapterSelect.addEventListener('change', loadBibleContent);
+
+    // Initial load
+    loadChapters();
 });
 </script>
-
-<style>
-#bible-content p {
-    line-height: 1.8;
-    margin-bottom: 1rem;
-    font-family: 'Georgia', serif;
-    color: #333;
-}
-
-#bible-content {
-    padding: 20px;
-    background-color: #f9fafb;
-    border-radius: 8px;
-}
-
-#bible-content .verse {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 1.15rem;
-}
-
-#bible-content .intro {
-    margin-top: 1rem;
-    font-style: italic;
-}
-</style>
 {% endblock %}
