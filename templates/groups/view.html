@@ -4,29 +4,39 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen py-8">
     <!-- Gradient Header -->
     <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg shadow-xl mb-8">
-        <div class="flex flex-col sm:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-white">{{ group.name }}</h1>
-                <p class="text-gray-200 opacity-90 mb-4 max-w-xl text-sm sm:text-base">{{ group.description }}</p>
-            </div>
-            <div class="bg-white bg-opacity-20 p-4 rounded-lg">
-                <div class="text-sm space-y-2">
-                    <div>
-                        <span class="font-semibold text-white">Current Book:</span>
-                        <span class="text-gray-100">{{ group.book }}</span>
-                    </div>
-                    <div>
-                        <span class="font-semibold text-white">Target Completion:</span>
-                        <span class="text-gray-100">{{ group.target_completion_date.strftime('%Y-%m-%d') }}</span>
-                    </div>
-                    <div>
-                        <span class="font-semibold text-white">Current Chapter:</span>
-                        <span class="text-gray-100">{{ group.current_chapter }}</span>
-                    </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-6 sm:space-y-0">
+        <div class="w-full sm:w-auto">
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-white">{{ group.name }}</h1>
+            <p class="text-gray-200 opacity-90 mb-4 max-w-xl text-sm sm:text-base">{{ group.description }}</p>
+            {% if current_user.id == group.creator_id or current_user.email.lower() == 'mukuhalevi@gmail.com'.lower() %}
+                <div class="mt-4 flex justify-start">
+                    <a href="{{ url_for('edit_group', group_id=group.id) }}"
+                       class="bg-blue-500 text-white px-6 py-2 rounded-md text-sm sm:text-base hover:bg-blue-600 transition-all ease-in-out duration-300 w-full sm:w-auto">
+                        Edit Group
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-white bg-opacity-20 p-4 rounded-lg w-full sm:w-64">
+            <div class="text-sm space-y-2">
+                <div>
+                    <span class="font-semibold text-white">Current Book:</span>
+                    <span class="text-gray-100">{{ group.book }}</span>
+                </div>
+                <div>
+                    <span class="font-semibold text-white">Target Completion:</span>
+                    <span class="text-gray-100">{{ group.target_completion_date.strftime('%Y-%m-%d') }}</span>
+                </div>
+                <div>
+                    <span class="font-semibold text-white">Current Chapter:</span>
+                    <span class="text-gray-100">{{ group.current_chapter }}</span>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Bible Content Section -->

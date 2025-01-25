@@ -16,7 +16,8 @@
             {% if my_groups %}
                 <div class="space-y-4">
                     {% for group in my_groups %}
-                        <a href="{{ url_for('view_group', group_id=group.id) }}" 
+
+                        <a href="{{ url_for('view_group', group_id=group.id) }}"
                            class="block p-4 border rounded hover:bg-gray-50">
                             <div class="flex justify-between items-start">
                                 <div>

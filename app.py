@@ -1100,6 +1100,76 @@ def admin_delete_reading(reading_id):
 
     return redirect(url_for('admin_readings'))
 
+def group_creator_or_admin_required(f):
+    @wraps(f)
+    def decorated_function(group_id, *args, **kwargs):
+        group = ReadingGroup.query.get_or_404(group_id)
+        if not (current_user.is_authenticated and
+                (group.creator_id == current_user.id or
+                 current_user.email.lower() == 'mukuhalevi@gmail.com'.lower())):
+            flash('You do not have permission to modify this group.')
+            return redirect(url_for('view_group', group_id=group_id))
+        return f(group_id, *args, **kwargs)
+    return decorated_function
+
+
+@app.route('/groups/<int:group_id>/edit', methods=['GET', 'POST'])
+@login_required
+@group_creator_or_admin_required
+def edit_group(group_id):
+    group = ReadingGroup.query.get_or_404(group_id)
+
+    if request.method == 'POST':
+        group.name = request.form.get('name')
+        group.description = request.form.get('description')
+        group.book = request.form.get('book')
+        group.visibility = request.form.get('visibility')
+
+        # Update target completion date
+        target_date = request.form.get('target_date')
+        if target_date:
+            group.target_completion_date = datetime.strptime(target_date, '%Y-%m-%d')
+
+        # Handle access code for private groups
+        if group.visibility == 'private':
+            access_code = request.form.get('access_code')
+            if access_code:
+                group.access_code = access_code
+
+        db.session.commit()
+        flash('Group updated successfully.')
+        return redirect(url_for('view_group', group_id=group_id))
+
+    # Get book list for dropdown
+    version_id = BIBLE_VERSIONS.get(current_user.preferred_version,
+                                    BIBLE_VERSIONS[app.config['DEFAULT_BIBLE_VERSION']])
+    bible_books = get_bible_books(version_id)
+
+    return render_template('groups/edit.html', group=group, books=bible_books)
+
+@app.route('/groups/<int:group_id>/delete', methods=['POST'])
+@login_required
+@group_creator_or_admin_required
+def delete_group(group_id):
+    group = ReadingGroup.query.get_or_404(group_id)
+
+    try:
+        # Delete associated group members, readings, and invitations
+        GroupMember.query.filter_by(group_id=group_id).delete()
+        GroupReading.query.filter_by(group_id=group_id).delete()
+        GroupInvitation.query.filter_by(group_id=group_id).delete()
+
+        # Delete group
+        db.session.delete(group)
+        db.session.commit()
+
+        flash('Group and associated data deleted successfully.')
+        return redirect(url_for('list_groups'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting group: {str(e)}')
+        return redirect(url_for('view_group', group_id=group_id))
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
