@@ -10,6 +10,7 @@ from flask_caching import Cache
 import secrets
 import json
 from flask import session
+import uuid
 
 
 app = Flask(__name__)
@@ -220,16 +221,17 @@ def home():
                            my_groups=my_groups)
 
 
-# In your login route
+from sqlalchemy import func
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
 
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = request.form.get('email').lower()  # Ensure case-insensitivity
         password = request.form.get('password')
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter(func.lower(User.email) == email).first()  # Compare emails case-insensitively
 
         if user and check_password_hash(user.password_hash, password):
             # Explicitly set session variables
@@ -892,6 +894,12 @@ def inject_invitation_count():
         ).count()
         return dict(invitation_count=invitation_count)
     return dict(invitation_count=0)
+
+@app.route("/error")
+def error_page():
+    # Generate a unique error ID for tracking
+    error_id = str(uuid.uuid4())  # You can replace this with your preferred error ID generation logic
+    return render_template("500.html", error_id=error_id)
 
 if __name__ == '__main__':
     with app.app_context():

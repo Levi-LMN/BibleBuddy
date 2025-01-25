@@ -6,6 +6,7 @@
     <title>Bible Reading Tracker</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <nav class="bg-white shadow-md">
@@ -48,12 +49,23 @@
                             </a>
                         </div>
                         {% else %}
-                        <div class="flex space-x-3">
-                            <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-blue-600 text-sm font-medium">Login</a>
-                            <a href="{{ url_for('register') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                Register
-                            </a>
-                        </div>
+<!--                        SHould have the login/register-->
+
+<div class="flex items-center space-x-4">
+    <a href="{{ url_for('login') }}" class="hidden sm:inline-flex items-center px-3 py-2 border border-blue-600 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-50">
+        Login
+    </a>
+    <a href="{{ url_for('register') }}" class="hidden sm:inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+        Register
+    </a>
+</div>
+<div class="sm:hidden flex space-x-2">
+    <a href="{{ url_for('login') }}" class="text-blue-600 text-sm font-medium">Login</a>
+    <a href="{{ url_for('register') }}" class="text-blue-600 text-sm font-medium">Register</a>
+</div>
+
+
+
                         {% endif %}
                     </div>
                 </div>
@@ -100,7 +112,60 @@
             {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
+        {% block content %}
+        <!-- Example Home Page Content -->
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h1 class="text-2xl font-bold text-blue-600 mb-4">Welcome to Bible Reading Tracker</h1>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-3">Your Progress</h2>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Old Testament</span>
+                            <span class="text-sm font-medium text-blue-600">45% Complete</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mt-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">New Testament</span>
+                            <span class="text-sm font-medium text-blue-600">22% Complete</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: 22%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-3">Recent Reading</h2>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between items-center">
+                            <span class="text-gray-600">John 3</span>
+                            <span class="text-sm text-gray-500">2 days ago</span>
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span class="text-gray-600">Psalms 23</span>
+                            <span class="text-sm text-gray-500">4 days ago</span>
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span class="text-gray-600">Genesis 1-2</span>
+                            <span class="text-sm text-gray-500">1 week ago</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <a href="{{ url_for('read') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Start Reading
+                </a>
+            </div>
+        </div>
+        {% endblock %}
     </main>
 
     <footer class="bg-white shadow">
