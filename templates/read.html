@@ -3,7 +3,7 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen py-8">
     <!-- Gradient Header -->
     <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg shadow-xl mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-white">Record Your Bible Reading</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-white" id="greeting">Hi {{ user_name }}, track your spiritual journey</h1>
         <p class="text-gray-200 opacity-90 max-w-xl">Track your spiritual journey and maintain your reading consistency</p>
     </div>
 
@@ -101,6 +101,23 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Get the current hour
+    const currentHour = new Date().getHours();
+    const greetingElement = document.getElementById('greeting');
+
+    // Define the greeting text based on the time of day
+    let greetingText = "Hi {{ user_name }}"; // Default
+    if (currentHour < 12) {
+        greetingText = "Good morning, {{ user_name }}";
+    } else if (currentHour < 18) {
+        greetingText = "Good afternoon, {{ user_name }}";
+    } else {
+        greetingText = "Good evening, {{ user_name }}";
+    }
+
+    // Update the greeting in the header
+    greetingElement.textContent = greetingText;
+
     const versionSelect = document.getElementById('version-select');
     const bookSelect = document.getElementById('book-select');
     const chapterSelect = document.getElementById('chapter-select');

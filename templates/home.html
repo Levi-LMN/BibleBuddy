@@ -2,6 +2,11 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="max-w-6xl mx-auto space-y-8">
+    <!-- Greeting Section -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg shadow-xl mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2" id="greeting">Hi {{ user_name }}, welcome back!</h1>
+    </div>
+
     <!-- Stats and Quick Actions Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Reading Stats -->
@@ -120,4 +125,26 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the current hour
+    const currentHour = new Date().getHours();
+    const greetingElement = document.getElementById('greeting');
+
+    // Define the greeting text based on the time of day
+    let greetingText = "Hi {{ user_name }}"; // Default
+    if (currentHour < 12) {
+        greetingText = "Good morning, {{ user_name }}";
+    } else if (currentHour < 18) {
+        greetingText = "Good afternoon, {{ user_name }}";
+    } else {
+        greetingText = "Good evening, {{ user_name }}";
+    }
+
+    // Update the greeting in the header
+    greetingElement.textContent = greetingText;
+});
+</script>
+
 {% endblock %}
