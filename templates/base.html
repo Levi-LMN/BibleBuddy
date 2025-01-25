@@ -10,33 +10,29 @@
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <a href="{{ url_for('home') }}" class="text-2xl font-bold text-blue-600">Bible Tracker</a>
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center">
+                        <a href="{{ url_for('home') }}" class="text-xl sm:text-2xl font-bold text-blue-600">Bible Tracker</a>
                     </div>
-                    {% if current_user.is_authenticated %}
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center">
-                            <i data-feather="home" class="mr-2 h-4 w-4"></i>Home
-                        </a>
-                        <a href="{{ url_for('read') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center">
-                            <i data-feather="book-open" class="mr-2 h-4 w-4"></i>Read
-                        </a>
-                        <a href="{{ url_for('history') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center">
-                            <i data-feather="clock" class="mr-2 h-4 w-4"></i>History
-                        </a>
-                        <a href="{{ url_for('list_groups') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center">
-                            <i data-feather="users" class="mr-2 h-4 w-4"></i>Groups
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                    {% if current_user.is_authenticated %}
-                    <div class="ml-3 relative">
-                        <div class="flex items-center">
-                            <a href="{{ url_for('view_invitations') }}" class="mr-4 relative">
+                    <div class="flex items-center">
+                        {% if current_user.is_authenticated %}
+                        <div class="hidden sm:flex space-x-4 mr-4">
+                            <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium flex items-center">
+                                <i data-feather="home" class="mr-1 h-4 w-4"></i>Home
+                            </a>
+                            <a href="{{ url_for('read') }}" class="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium flex items-center">
+                                <i data-feather="book-open" class="mr-1 h-4 w-4"></i>Read
+                            </a>
+                            <a href="{{ url_for('history') }}" class="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium flex items-center">
+                                <i data-feather="clock" class="mr-1 h-4 w-4"></i>History
+                            </a>
+                            <a href="{{ url_for('list_groups') }}" class="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium flex items-center">
+                                <i data-feather="users" class="mr-1 h-4 w-4"></i>Groups
+                            </a>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <a href="{{ url_for('view_invitations') }}" class="relative">
                                 <i data-feather="mail" class="h-5 w-5 text-gray-400 hover:text-blue-600"></i>
                                 {% if invitation_count > 0 %}
                                 <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
@@ -44,25 +40,49 @@
                                 </span>
                                 {% endif %}
                             </a>
-                            <a href="{{ url_for('profile') }}" class="mr-4">
+                            <a href="{{ url_for('profile') }}" class="">
                                 <i data-feather="user" class="h-5 w-5 text-gray-400 hover:text-blue-600"></i>
                             </a>
-                            <a href="{{ url_for('logout') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            <a href="{{ url_for('logout') }}" class="hidden sm:inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                                 Logout
                             </a>
                         </div>
+                        {% else %}
+                        <div class="flex space-x-3">
+                            <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-blue-600 text-sm font-medium">Login</a>
+                            <a href="{{ url_for('register') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                Register
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <div class="flex space-x-4">
-                        <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Login</a>
-                        <a href="{{ url_for('register') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                            Register
-                        </a>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Menu Toggle -->
+        {% if current_user.is_authenticated %}
+        <div class="sm:hidden bg-white border-t">
+            <div class="grid grid-cols-4 text-center">
+                <a href="{{ url_for('home') }}" class="py-3 text-gray-600 hover:text-blue-600 flex flex-col items-center">
+                    <i data-feather="home" class="h-5 w-5"></i>
+                    <span class="text-xs mt-1">Home</span>
+                </a>
+                <a href="{{ url_for('read') }}" class="py-3 text-gray-600 hover:text-blue-600 flex flex-col items-center">
+                    <i data-feather="book-open" class="h-5 w-5"></i>
+                    <span class="text-xs mt-1">Read</span>
+                </a>
+                <a href="{{ url_for('history') }}" class="py-3 text-gray-600 hover:text-blue-600 flex flex-col items-center">
+                    <i data-feather="clock" class="h-5 w-5"></i>
+                    <span class="text-xs mt-1">History</span>
+                </a>
+                <a href="{{ url_for('list_groups') }}" class="py-3 text-gray-600 hover:text-blue-600 flex flex-col items-center">
+                    <i data-feather="users" class="h-5 w-5"></i>
+                    <span class="text-xs mt-1">Groups</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </nav>
 
     <main class="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -83,9 +103,18 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-white shadow mt-8">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-            © 2024 Bible Reading Tracker
+    <footer class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center">
+            <div class="text-gray-500 text-sm">
+                © 2024 Bible Reading Tracker
+            </div>
+            <div class="mt-2 text-xs text-gray-400 flex items-center justify-center">
+                <span class="mr-2">Made with</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-red-500 animate-pulse">
+                    <path d="M11.645 20.91l-.007-.003-.022-.012a15.254 15.254 0 01-.383-.218 25.012 25.012 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.464 25.464 0 01-4.244 3.17 15.255 15.255 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                </svg>
+                <span class="ml-2">by Levi</span>
+            </div>
         </div>
     </footer>
 

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    {% extends "base.html" %}
+
+    {% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-800">Your Reading History</h1>
+            </div>
+
+            {% if readings.items %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chapter</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for reading in readings.items %}
+                        <tr class="hover:bg-gray-50 transition duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ format_date(reading.date) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reading.book }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.chapter }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.bible_version }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if readings.pages > 1 %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                <div class="text-sm text-gray-600">
+                    Page {{ readings.page }} of {{ readings.pages }}
+                </div>
+                <div class="flex space-x-2">
+                    {% if readings.has_prev %}
+                    <a href="{{ url_for('history', page=readings.prev_num) }}"
+                       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                        Previous
+                    </a>
+                    {% endif %}
+
+                    {% if readings.has_next %}
+                    <a href="{{ url_for('history', page=readings.next_num) }}"
+                       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="p-6 text-center text-gray-600">
+                <p>You haven't recorded any readings yet. Start reading to track your progress!</p>
+                <a href="{{ url_for('read') }}" class="mt-4 inline-block px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                    Start Reading
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>
