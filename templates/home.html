@@ -1,0 +1,123 @@
+{# templates/home.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+    <!-- Stats and Quick Actions Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Reading Stats -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Your Reading Stats</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-100 p-4 rounded">
+                    <h3 class="text-lg font-semibold">Current Streak</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ streak }} days</p>
+                </div>
+                <div class="bg-green-100 p-4 rounded">
+                    <h3 class="text-lg font-semibold">Total Readings</h3>
+                    <p class="text-3xl font-bold text-green-600">{{ total_readings }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Quick Actions</h2>
+            <div class="space-y-4">
+                <a href="{{ url_for('read') }}"
+                   class="block w-full bg-blue-500 text-white py-3 px-4 rounded text-center hover:bg-blue-600 transition-colors">
+                    Record New Reading
+                </a>
+                <a href="{{ url_for('create_group') }}"
+                   class="block w-full bg-green-500 text-white py-3 px-4 rounded text-center hover:bg-green-600 transition-colors">
+                    Create Reading Group
+                </a>
+                <a href="{{ url_for('list_groups') }}"
+                   class="block w-full bg-purple-500 text-white py-3 px-4 rounded text-center hover:bg-purple-600 transition-colors">
+                    View All Groups
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reading Groups and Recent Activity Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- My Reading Groups -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">My Reading Groups</h2>
+                <a href="{{ url_for('list_groups') }}" class="text-blue-500 hover:text-blue-600 text-sm">View All →</a>
+            </div>
+            {% if my_groups %}
+                <div class="space-y-4">
+                    {% for group in my_groups %}
+                        <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <a href="{{ url_for('view_group', group_id=group.id) }}" class="block">
+                                <h3 class="font-semibold text-lg">{{ group.name }}</h3>
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <p>Reading: {{ group.book }}</p>
+                                    <p>Current Chapter: {{ group.current_chapter }}</p>
+                                    <p>Target: {{ group.target_completion_date.strftime('%Y-%m-%d') }}</p>
+                                    <div class="mt-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            {% set completion = get_group_completion(group) %}
+                                            <div class="bg-blue-500 h-2 rounded-full"
+                                                 style="width: {{ completion }}%">
+                                            </div>
+                                        </div>
+                                        <p class="text-right text-xs mt-1">{{ completion }}% Complete</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">You haven't joined any reading groups yet.</p>
+                <a href="{{ url_for('list_groups') }}"
+                   class="inline-block mt-4 text-blue-500 hover:text-blue-600">
+                    Find a group to join →
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Recent Readings -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Recent Readings</h2>
+                <a href="{{ url_for('history') }}" class="text-blue-500 hover:text-blue-600 text-sm">View All →</a>
+            </div>
+            {% if recent_readings %}
+                <div class="space-y-4">
+                    {% for reading in recent_readings %}
+                        <div class="border-b pb-4 last:border-b-0">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold">{{ reading.book }} {{ reading.chapter }}</h3>
+                                    {% if reading.verses %}
+                                        <p class="text-sm text-gray-600">Verses: {{ reading.verses }}</p>
+                                    {% endif %}
+                                    {% if reading.bible_version %}
+                                        <p class="text-xs text-gray-500">{{ reading.bible_version }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm text-gray-500">
+                                    {{ reading.date.strftime('%Y-%m-%d') }}
+                                </span>
+                            </div>
+                            {% if reading.highlights %}
+                                <p class="mt-2 text-sm text-gray-700">{{ reading.highlights }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No readings recorded yet. Start your journey today!</p>
+                <a href="{{ url_for('read') }}"
+                   class="inline-block mt-4 text-blue-500 hover:text-blue-600">
+                    Record your first reading →
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

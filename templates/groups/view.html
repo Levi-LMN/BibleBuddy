@@ -1,0 +1,221 @@
+{# templates/groups/view.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Group Info Header -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold mb-2">{{ group.name }}</h1>
+                <p class="text-gray-600 mb-4">{{ group.description }}</p>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="font-semibold">Current Book:</span> {{ group.book }}
+                    </div>
+                    <div>
+                        <span class="font-semibold">Target Completion:</span>
+                        {{ group.target_completion_date.strftime('%Y-%m-%d') }}
+                    </div>
+                    <div>
+                        <span class="font-semibold">Current Chapter:</span> {{ group.current_chapter }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Bible Content Section -->
+        <div class="space-y-6">
+            <!-- Bible Reading Controls -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Bible Reading</h2>
+                    <select id="version-select" class="border rounded px-2 py-1">
+                        {% for version in bible_versions %}
+                            <option value="{{ version }}" {% if version == current_user.preferred_version %}selected{% endif %}>
+                                {{ version }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex space-x-4 mb-4">
+                    <button id="prev-chapter" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                            {% if current_chapter == 1 %}disabled{% endif %}>
+                        Previous Chapter
+                    </button>
+                    <select id="chapter-select" class="flex-1 border rounded px-2">
+                        {% for i in range(1, total_chapters + 1) %}
+                            <option value="{{ i }}" {% if i == current_chapter %}selected{% endif %}>
+                                Chapter {{ i }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button id="next-chapter" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                            {% if current_chapter == total_chapters %}disabled{% endif %}>
+                        Next Chapter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bible Content Display -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div id="bible-content" class="prose max-w-none">
+                    <!-- Content will be loaded here via JavaScript -->
+                    Loading...
+                </div>
+                <style>
+                    /* Bible content specific styling */
+                    .bible-verse {
+                        display: block;
+                        margin: 1.5em 0;
+                        line-height: 1.8;
+                        position: relative;
+                        padding-left: 2.5em;
+                    }
+
+                    .verse-number {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        font-size: 0.8em;
+                        font-weight: 600;
+                        color: #4B5563;
+                        min-width: 2em;
+                        padding-right: 0.5em;
+                    }
+
+                    .chapter-content {
+                        font-size: 1.1em;
+                        color: #1F2937;
+                    }
+
+                    @media (max-width: 640px) {
+                        .bible-verse {
+                            padding-left: 2em;
+                        }
+                    }
+                </style>
+            </div>
+        </div>
+
+        <!-- Group Progress Section -->
+        <div class="space-y-6">
+            <!-- Reading Progress -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Group Progress</h2>
+                <div class="space-y-4">
+                    {% for member in members %}
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium">{{ member.user.name }}</span>
+                        <div class="flex items-center flex-1 ml-4">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                {% set progress_pct = (progress[member.user_id] / total_chapters * 100) %}
+                                <div class="bg-blue-500 h-2.5 rounded-full" style="width: {{ progress_pct }}%"></div>
+                            </div>
+                            <span class="ml-2 text-sm text-gray-600">
+                                Chapter {{ progress[member.user_id] }}/{{ total_chapters }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Record Reading -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Record Your Reading</h2>
+                <form method="POST" action="{{ url_for('record_group_reading', group_id=group.id) }}" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Chapter</label>
+                        <input type="number" name="chapter" min="1" max="{{ total_chapters }}"
+                               value="{{ current_user_progress + 1 }}"
+                               class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Notes (optional)</label>
+                        <textarea name="notes" rows="3"
+                                  class="w-full px-3 py-2 border rounded"></textarea>
+                    </div>
+                    <button type="submit"
+                            class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+                        Record Reading
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const versionSelect = document.getElementById('version-select');
+    const chapterSelect = document.getElementById('chapter-select');
+    const prevButton = document.getElementById('prev-chapter');
+    const nextButton = document.getElementById('next-chapter');
+    const contentDiv = document.getElementById('bible-content');
+
+    function formatBibleContent(content) {
+        // Remove any existing HTML tags but preserve verse numbers and text
+        const plainText = content.replace(/<\/?[^>]+(>|$)/g, "");
+
+        // Split content into verses (assuming verses start with numbers)
+        const verses = plainText.match(/\d+[^\d]+/g) || [];
+
+        return verses.map(verse => {
+            // Extract verse number and text
+            const verseMatch = verse.match(/(\d+)(.+)/);
+            if (verseMatch) {
+                const [_, number, text] = verseMatch;
+                return `<div class="bible-verse">
+                    <span class="verse-number">${number}</span>
+                    <span class="verse-text">${text.trim()}</span>
+                </div>`;
+            }
+            return '';
+        }).join('');
+    }
+
+    function loadBibleContent() {
+        const version = versionSelect.value;
+        const chapter = chapterSelect.value;
+        contentDiv.innerHTML = 'Loading...';
+
+        fetch(`/get_content/${version}/${encodeURIComponent('{{ group.book }}')}/${chapter}`)
+            .then(response => response.json())
+            .then(data => {
+                const formattedContent = `
+                    <div class="chapter-content">
+                        ${formatBibleContent(data.content)}
+                    </div>`;
+                contentDiv.innerHTML = formattedContent;
+            })
+            .catch(error => {
+                contentDiv.innerHTML = 'Error loading content. Please try again.';
+            });
+    }
+
+    // Event Listeners
+    versionSelect.addEventListener('change', loadBibleContent);
+    chapterSelect.addEventListener('change', loadBibleContent);
+
+    prevButton.addEventListener('click', function() {
+        if (chapterSelect.selectedIndex > 0) {
+            chapterSelect.selectedIndex--;
+            loadBibleContent();
+        }
+    });
+
+    nextButton.addEventListener('click', function() {
+        if (chapterSelect.selectedIndex < chapterSelect.options.length - 1) {
+            chapterSelect.selectedIndex++;
+            loadBibleContent();
+        }
+    });
+
+    // Initial load
+    loadBibleContent();
+});
+</script>
+
+{% endblock %}

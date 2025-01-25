@@ -1,0 +1,122 @@
+{# templates/groups/list.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Reading Groups</h1>
+        <a href="{{ url_for('create_group') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Create New Group
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- My Groups -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">My Groups</h2>
+            {% if my_groups %}
+                <div class="space-y-4">
+                    {% for group in my_groups %}
+                        <a href="{{ url_for('view_group', group_id=group.id) }}" 
+                           class="block p-4 border rounded hover:bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold">{{ group.name }}</h3>
+                                    <p class="text-gray-600">
+                                        Reading: {{ group.book }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        Target completion: {{ group.target_completion_date.strftime('%Y-%m-%d') }}
+                                    </p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if group.visibility == 'public' %}
+                                        bg-green-100 text-green-800
+                                    {% elif group.visibility == 'private' %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% else %}
+                                        bg-purple-100 text-purple-800
+                                    {% endif %}">
+                                    {{ group.visibility|title }}
+                                </span>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">You haven't joined any reading groups yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Available Groups -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Available Groups</h2>
+            {% if available_groups %}
+                <div class="space-y-4">
+                    {% for group in available_groups %}
+                        <div class="p-4 border rounded">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-semibold">{{ group.name }}</h3>
+                                    <p class="text-gray-600">
+                                        Reading:
+                                        {% if group.id not in member_group_ids and (group.visibility == 'private' or group.visibility == 'invitation') %}
+                                            <span class="blur">[Private]</span>
+                                        {% else %}
+                                            {{ group.book }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        Target completion:
+                                        {% if group.id not in member_group_ids and (group.visibility == 'private' or group.visibility == 'invitation') %}
+                                            <span class="blur">[Private]</span>
+                                        {% else %}
+                                            {{ group.target_completion_date.strftime('%Y-%m-%d') }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if group.visibility == 'public' %}
+                                        bg-green-100 text-green-800
+                                    {% elif group.visibility == 'private' %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% else %}
+                                        bg-purple-100 text-purple-800
+                                    {% endif %}">
+                                    {{ group.visibility|title }}
+                                </span>
+                            </div>
+
+                            {% if group.visibility == 'public' %}
+                                <a href="{{ url_for('join_group', group_id=group.id) }}"
+                                   class="inline-block mt-2 text-blue-500 hover:text-blue-600">
+                                    Join Group →
+                                </a>
+                            {% elif group.visibility == 'private' %}
+                                <form action="{{ url_for('join_group', group_id=group.id) }}" method="POST" class="mt-2">
+                                    <div class="flex space-x-2">
+                                        <input type="text"
+                                               name="access_code"
+                                               placeholder="Enter access code"
+                                               required
+                                               class="flex-1 px-3 py-1 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <button type="submit"
+                                                class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                            Join
+                                        </button>
+                                    </div>
+                                </form>
+                            {% elif group.visibility == 'invitation' %}
+                                <p class="mt-2 text-sm text-gray-600 italic">
+                                    This group requires an invitation to join
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No available groups to join.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

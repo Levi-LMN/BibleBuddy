@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-6">Group Invitations</h1>
+    
+    {% if invitations %}
+        <div class="space-y-4">
+            {% for invitation in invitations %}
+                <div class="bg-white shadow rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-semibold">{{ invitation.reading_group.name }}</h3>
+                        <p class="text-gray-600">
+                            Invited to read {{ invitation.reading_group.book }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                            Expires: {{ invitation.expires_at.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <form action="{{ url_for('accept_invitation', invitation_id=invitation.id) }}" method="POST">
+                            <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                                Accept
+                            </button>
+                        </form>
+                        <form action="{{ url_for('decline_invitation', invitation_id=invitation.id) }}" method="POST">
+                            <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                Decline
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-600">No pending invitations.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+{# templates/groups/create.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold">Create Reading Group</h1>
+            <p class="text-gray-600">Start a new reading group and invite others to join you on your reading journey.</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            <!-- Group Name -->
+            <div>
+                <label for="name" class="block font-medium text-gray-700 mb-2">
+                    Group Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       id="name" 
+                       name="name" 
+                       required
+                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="e.g., Morning Bible Study Group">
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="description" class="block font-medium text-gray-700 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          required
+                          rows="3" 
+                          class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Describe your group's goals and reading pace..."></textarea>
+            </div>
+
+            <!-- Book Selection -->
+            <div>
+                <label for="book" class="block font-medium text-gray-700 mb-2">
+                    Book to Read <span class="text-red-500">*</span>
+                </label>
+                <select id="book" 
+                        name="book" 
+                        required
+                        class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Select a book...</option>
+                    {% for book_name in books.keys() %}
+                        <option value="{{ book_name }}">{{ book_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Target Completion Date -->
+            <div>
+                <label for="target_date" class="block font-medium text-gray-700 mb-2">
+                    Target Completion Date <span class="text-red-500">*</span>
+                </label>
+                <input type="date" 
+                       id="target_date" 
+                       name="target_date" 
+                       required
+                       min="{{ today }}"
+                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- Privacy Settings -->
+            <div>
+                <label for="visibility" class="block font-medium text-gray-700 mb-2">
+                    Privacy Settings <span class="text-red-500">*</span>
+                </label>
+                <select id="visibility"
+                        name="visibility"
+                        required
+                        class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="public">Public - Anyone can see and join</option>
+                    <option value="private">Private - Requires access code to join</option>
+                    <option value="invitation">Invitation Only - Members must be invited</option>
+                </select>
+
+                <div id="access-code-section" class="mt-4 hidden">
+                    <label for="access_code" class="block font-medium text-gray-700 mb-2">
+                        Access Code <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="access_code"
+                           name="access_code"
+                           class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Enter an access code for your group">
+                    <p class="text-sm text-gray-500 mt-1">Share this code with people you want to join the group.</p>
+                </div>
+            </div>
+
+            <!-- Invite Section for Invitation-Only Groups -->
+            <div id="invite-section" class="bg-blue-50 p-4 rounded-md" style="display: none;">
+                <h3 class="font-medium text-blue-800 mb-2">Invite Members</h3>
+                <div id="email-container">
+                    <div class="email-input-group flex mb-2">
+                        <input type="email"
+                               name="emails[]"
+                               placeholder="Enter email address"
+                               class="w-full px-3 py-2 border rounded-l-md">
+                        <button type="button"
+                                class="remove-email bg-red-500 text-white px-3 py-2 rounded-r-md"
+                                style="display: none;">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <button type="button"
+                        id="add-email"
+                        class="mb-2 text-blue-600 hover:text-blue-800">
+                    + Add Another Email
+                </button>
+                <p class="text-sm text-gray-500">
+                    Invitation-only groups require at least one email to invite.
+                </p>
+            </div>
+
+            <!-- Reading Schedule Guidelines -->
+            <div class="bg-blue-50 p-4 rounded-md">
+                <h3 class="font-medium text-blue-800 mb-2">Reading Schedule Guidelines</h3>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Consider the length of the book when setting your target date</li>
+                    <li>• Allow time for discussion and reflection</li>
+                    <li>• Account for varying reading speeds of group members</li>
+                    <li>• Include buffer time for holidays and busy periods</li>
+                </ul>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-center justify-between pt-4">
+                <a href="{{ url_for('list_groups') }}"
+                   class="text-gray-600 hover:text-gray-800">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Create Group
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const visibilitySelect = document.getElementById('visibility');
+    const accessCodeSection = document.getElementById('access-code-section');
+    const inviteSection = document.getElementById('invite-section');
+    const emailContainer = document.getElementById('email-container');
+    const addEmailButton = document.getElementById('add-email');
+
+    // Function to create a new email input group
+    function createEmailInputGroup() {
+        const group = document.createElement('div');
+        group.className = 'email-input-group flex mb-2';
+
+        const input = document.createElement('input');
+        input.type = 'email';
+        input.name = 'emails[]';
+        input.placeholder = 'Enter email address';
+        input.className = 'w-full px-3 py-2 border rounded-l-md';
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'remove-email bg-red-500 text-white px-3 py-2 rounded-r-md';
+        removeButton.textContent = '✕';
+
+        removeButton.addEventListener('click', function() {
+            group.remove();
+            updateRemoveButtonVisibility();
+        });
+
+        group.appendChild(input);
+        group.appendChild(removeButton);
+
+        return group;
+    }
+
+    // Function to update remove button visibility
+    function updateRemoveButtonVisibility() {
+        const groups = document.querySelectorAll('.email-input-group');
+        groups.forEach((group) => {
+            const removeButton = group.querySelector('.remove-email');
+            removeButton.style.display = groups.length > 1 ? 'block' : 'none';
+        });
+    }
+
+    // Add email input group
+    addEmailButton.addEventListener('click', function() {
+        const newGroup = createEmailInputGroup();
+        emailContainer.appendChild(newGroup);
+        updateRemoveButtonVisibility();
+    });
+
+    // Initial remove button update
+    updateRemoveButtonVisibility();
+
+    // Visibility select event listener
+    visibilitySelect.addEventListener('change', function() {
+        // Toggle access code section for private groups
+        accessCodeSection.classList.toggle('hidden', this.value !== 'private');
+        document.getElementById('access_code').required = this.value === 'private';
+
+        // Toggle invite section for invitation-only groups
+        inviteSection.style.display = this.value === 'invitation' ? 'block' : 'none';
+
+        // Reset email inputs when changing visibility
+        if (this.value !== 'invitation') {
+            while (emailContainer.children.length > 1) {
+                emailContainer.removeChild(emailContainer.lastChild);
+            }
+        }
+    });
+
+    // Set a default target date 30 days from now
+    const targetDateInput = document.getElementById('target_date');
+    const today = new Date();
+    const defaultTarget = new Date(today);
+    defaultTarget.setDate(today.getDate() + 30);
+    targetDateInput.setAttribute('min', today.toISOString().split('T')[0]);
+    targetDateInput.value = defaultTarget.toISOString().split('T')[0];
+});
+</script>
+
+{% endblock %}

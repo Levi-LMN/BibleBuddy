@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div id="not-found" class="container text-center">
+    <h1>404</h1>
+    <p>Oops! The page you're looking for doesn't exist.</p>
+    <a href="/" class="btn btn-primary">Go Back Home</a>
+</div>
+
+<script type="text/javascript">
+    // Example TypeScript integration
+    document.addEventListener("DOMContentLoaded", () => {
+        const notFoundDiv = document.getElementById("not-found");
+        if (notFoundDiv) {
+            console.log("404 Page Loaded");
+        }
+    });
+</script>
+{% endblock %}
