@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -159,6 +159,7 @@ class OAuth(db.Model, OAuthConsumerMixin):
     # Don't add a token column - OAuthConsumerMixin provides it with proper serialization
 
     __table_args__ = (db.UniqueConstraint('provider', 'provider_user_id'),)
+
 
 # Bible API helper functions with caching
 @cache.memoize(timeout=86400)
@@ -1332,6 +1333,84 @@ def google_login():
 # Debug code to add temporarily
 # print(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
 # print(f"GOOGLE_CLIENT_SECRET: {os.environ.get('GOOGLE_CLIENT_SECRET')}")
+
+@app.route('/edit_reading/<int:reading_id>', methods=['GET', 'POST'])
+@login_required
+def edit_reading(reading_id):
+    reading = Reading.query.filter_by(id=reading_id, user_id=current_user.id).first_or_404()
+
+    if request.method == 'POST':
+        # Update reading details
+        reading.book = request.form.get('book')
+        reading.chapter = request.form.get('chapter')
+        reading.verses = request.form.get('verses')
+        reading.highlights = request.form.get('highlights')
+        reading.bible_version = request.form.get('bible_version')
+
+        # Could update date if needed
+        # reading.date = datetime.strptime(request.form.get('date'), '%Y-%m-%d')
+
+        db.session.commit()
+        flash('Reading updated successfully!', 'success')
+        return redirect(url_for('history', type='personal'))
+
+    return render_template('edit_reading.html', reading=reading, bible_versions=BIBLE_VERSIONS.keys())
+
+
+@app.route('/edit_group_reading/<int:reading_id>', methods=['GET', 'POST'])
+@login_required
+def edit_group_reading(reading_id):
+    reading = GroupReading.query.filter_by(id=reading_id, user_id=current_user.id).first_or_404()
+    group = ReadingGroup.query.get_or_404(reading.group_id)
+
+    if request.method == 'POST':
+        # Update group reading details
+        reading.notes = request.form.get('notes')
+
+        # Could update other fields if needed
+        # Typically for group readings, you wouldn't change the chapter
+
+        db.session.commit()
+        flash('Group reading updated successfully!', 'success')
+        return redirect(url_for('history', type='group'))
+
+    return render_template('groups/edit_group_reading.html', reading=reading, group=group)
+
+
+@app.route('/delete_reading/<int:reading_id>', methods=['POST'])
+@login_required
+def delete_reading(reading_id):
+    reading = Reading.query.get_or_404(reading_id)
+
+    # Ensure the user owns this reading
+    if reading.user_id != current_user.id:
+        abort(403)
+
+    db.session.delete(reading)
+    db.session.commit()
+
+    flash('Reading entry deleted successfully', 'success')
+    return jsonify({'success': True})
+
+
+@app.route('/delete_group_reading/<int:reading_id>', methods=['POST'])
+@login_required
+def delete_group_reading(reading_id):
+    reading = GroupReading.query.get_or_404(reading_id)
+
+    # Ensure the user owns this reading or is admin of the group
+    if reading.user_id != current_user.id:
+        # Check if user is group admin
+        group = ReadingGroup.query.get(reading.group_id)
+        if group.creator_id != current_user.id:
+            abort(403)
+
+    db.session.delete(reading)
+    db.session.commit()
+
+    flash('Group reading entry deleted successfully', 'success')
+    return jsonify({'success': True})
+
 
 if __name__ == '__main__':
     with app.app_context():

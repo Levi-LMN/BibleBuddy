@@ -1,29 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <div class="bg-gray-100 px-6 py-4 border-b">
-            <h1 class="text-2xl font-bold text-gray-800">{{ user_name }}'s Profile</h1>
+<div class="container mx-auto px-6 py-8">
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+        <!-- Profile Header -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-5 border-b">
+            <h1 class="text-3xl font-bold text-white">{{ user_name }}'s Profile</h1>
         </div>
 
-        <div class="p-6">
-            <div class="grid md:grid-cols-2 gap-6">
+        <div class="p-8">
+            <div class="grid md:grid-cols-2 gap-8">
                 <!-- Preferences Section -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h2 class="text-xl font-semibold mb-4">Preferences</h2>
-                    <form method="POST" class="space-y-4">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm border">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Preferences</h2>
+                    <form method="POST" class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">
                                 Preferred Bible Version
                             </label>
-                            <select 
-                                name="preferred_version" 
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                            <select
+                                name="preferred_version"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-400 focus:ring focus:ring-indigo-300 focus:ring-opacity-50 p-2"
                             >
                                 {% for version in versions %}
-                                <option 
-                                    value="{{ version }}" 
+                                <option
+                                    value="{{ version }}"
                                     {% if version == current_user.preferred_version %}selected{% endif %}
                                 >
                                     {{ version }}
@@ -31,9 +32,9 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <button 
-                            type="submit" 
-                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        <button
+                            type="submit"
+                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             Update Preferences
                         </button>
@@ -41,14 +42,14 @@
                 </div>
 
                 <!-- Reading Statistics Section -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h2 class="text-xl font-semibold mb-4">Reading Statistics</h2>
-                    <div class="space-y-3">
-                        <h3 class="text-lg font-medium">Bible Version Breakdown</h3>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm border">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Reading Statistics</h2>
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-700">Bible Version Breakdown</h3>
                         {% for version, count in reading_stats %}
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">{{ version }}</span>
-                            <span class="font-bold text-indigo-600">{{ count }} readings</span>
+                        <div class="flex justify-between items-center bg-white p-3 rounded-md shadow-sm">
+                            <span class="text-gray-700">{{ version }}</span>
+                            <span class="font-semibold text-indigo-600">{{ count }} readings</span>
                         </div>
                         {% endfor %}
                     </div>
@@ -56,28 +57,28 @@
             </div>
 
             <!-- Groups Section -->
-            <div class="mt-6 bg-gray-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Reading Groups</h2>
+            <div class="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm border">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Reading Groups</h2>
                 {% if group_stats %}
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         {% for membership in group_stats %}
-<div class="flex justify-between items-center border-b pb-2 last:border-b-0">
-    <div>
-        <span class="font-medium text-gray-800">
-            {{ membership.reading_group.name }}
-        </span>
-        <span class="ml-2 text-sm text-gray-500">
-            Joined: {{ membership.join_date.strftime('%Y-%m-%d') }}
-        </span>
-    </div>
-    <span class="text-sm text-gray-600">
-        Book: {{ membership.reading_group.book }}
-    </span>
-</div>
-{% endfor %}
+                        <div class="flex justify-between items-center bg-white p-4 rounded-md shadow-sm border border-gray-200">
+                            <div>
+                                <span class="font-medium text-gray-800 text-lg">
+                                    {{ membership.reading_group.name }}
+                                </span>
+                                <span class="ml-2 text-sm text-gray-500">
+                                    Joined: {{ membership.join_date.strftime('%Y-%m-%d') }}
+                                </span>
+                            </div>
+                            <span class="text-sm text-gray-700 font-medium">
+                                Book: {{ membership.reading_group.book }}
+                            </span>
+                        </div>
+                        {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-gray-500">You haven't joined any reading groups yet.</p>
+                    <p class="text-gray-500 text-center">You haven't joined any reading groups yet.</p>
                 {% endif %}
             </div>
         </div>

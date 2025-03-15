@@ -1,6 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    /* Modal animation styles */
+    .backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .modal-fade-enter {
+        opacity: 0;
+        transform: scale(0.95);
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    }
+
+    .modal-fade-enter-active {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .modal-fade-exit-active {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+</style>
+
 <div class="container mx-auto px-4 py-8">
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -20,7 +44,8 @@
         </div>
 
         {% if readings.items %}
-        <div class="overflow-x-auto">
+        <!-- Desktop view - table -->
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-100">
                     <tr>
@@ -48,9 +73,19 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reading.book }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.chapter }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.bible_version }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200">
-                                    View Details
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 flex space-x-2">
+                                <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                        data-reading-id="{{ reading.id }}"
+                                        data-reading-type="personal">
+                                    View
+                                </button>
+                                <a href="{{ url_for('edit_reading', reading_id=reading.id) }}" class="edit-button bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition duration-200">
+                                    Edit
+                                </a>
+                                <button class="delete-button bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                        data-reading-id="{{ reading.id }}"
+                                        data-reading-type="personal">
+                                    Delete
                                 </button>
                             </td>
                         </tr>
@@ -66,9 +101,19 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ group_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ book }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.chapter }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200">
-                                    View Details
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 flex space-x-2">
+                                <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                        data-reading-id="{{ reading.id }}"
+                                        data-reading-type="group">
+                                    View
+                                </button>
+                                <a href="{{ url_for('edit_group_reading', reading_id=reading.id) }}" class="edit-button bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition duration-200">
+                                    Edit
+                                </a>
+                                <button class="delete-button bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                        data-reading-id="{{ reading.id }}"
+                                        data-reading-type="group">
+                                    Delete
                                 </button>
                             </td>
                         </tr>
@@ -76,6 +121,65 @@
                     {% endif %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile view - card layout -->
+        <div class="md:hidden">
+            {% if reading_type == 'personal' %}
+                {% for reading in readings.items %}
+                <div class="p-4 border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="font-bold text-gray-800 reading-row"
+                             data-reading-id="{{ reading.id }}"
+                             data-reading-type="personal">{{ reading.book }} {{ reading.chapter }}</div>
+                        <div class="text-sm text-gray-600">{{ format_date(reading.date) }}</div>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-3">Version: {{ reading.bible_version }}</div>
+                    <div class="flex space-x-2">
+                        <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                data-reading-id="{{ reading.id }}"
+                                data-reading-type="personal">
+                            View
+                        </button>
+                        <a href="{{ url_for('edit_reading', reading_id=reading.id) }}" class="edit-button bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition duration-200">
+                            Edit
+                        </a>
+                        <button class="delete-button bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                data-reading-id="{{ reading.id }}"
+                                data-reading-type="personal">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                {% for reading, group_name, book in readings.items %}
+                <div class="p-4 border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="font-bold text-gray-800 reading-row"
+                             data-reading-id="{{ reading.id }}"
+                             data-reading-type="group">{{ book }} {{ reading.chapter }}</div>
+                        <div class="text-sm text-gray-600">{{ format_date(reading.recorded_date) }}</div>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-3">Group: {{ group_name }}</div>
+                    <div class="flex space-x-2">
+                        <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                data-reading-id="{{ reading.id }}"
+                                data-reading-type="group">
+                            View
+                        </button>
+                        <a href="{{ url_for('edit_group_reading', reading_id=reading.id) }}" class="edit-button bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition duration-200">
+                            Edit
+                        </a>
+                        <button class="delete-button bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition duration-200"
+                                data-reading-id="{{ reading.id }}"
+                                data-reading-type="group">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
         </div>
 
         {% if readings.pages > 1 %}
@@ -119,8 +223,7 @@
 </div>
 
 <!-- Reading Detail Modal -->
-<div id="reading-modal" class="fixed inset-0 z-50 hidden overflow-auto">
-    <div class="backdrop fixed inset-0"></div>
+<div id="reading-modal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
     <div class="relative min-h-screen flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-3xl rounded-lg shadow-xl overflow-hidden relative modal-fade-enter">
             <!-- Modal Header -->
@@ -162,7 +265,16 @@
                     <div id="modal-notes" class="rich-text-content prose max-w-none bg-gray-50 p-4 rounded-lg border border-gray-200"></div>
                 </div>
 
-                <div class="mt-6 flex justify-end">
+                <div class="mt-6 flex justify-between">
+                    <div id="modal-edit-container" class="flex space-x-2">
+                        <a id="modal-edit-link" href="#" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition duration-200">
+                            Edit This Entry
+                        </a>
+                        <button id="modal-delete-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-200">
+                            Delete Entry
+                        </button>
+                    </div>
+
                     <button id="close-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition duration-200">
                         Close
                     </button>
@@ -172,148 +284,367 @@
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="delete-confirmation-modal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-xl overflow-hidden relative modal-fade-enter">
+            <!-- Modal Header -->
+            <div class="p-4 bg-gradient-to-r from-red-500 to-red-600 text-white">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Confirm Deletion</h3>
+                    <button id="close-delete-modal" class="focus:outline-none text-white hover:text-gray-200">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <p class="text-gray-700 mb-6">Are you sure you want to delete this reading entry? This action cannot be undone.</p>
+
+                <input type="hidden" id="delete-reading-id" value="">
+                <input type="hidden" id="delete-reading-type" value="">
+
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition duration-200">
+                        Cancel
+                    </button>
+                    <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-200">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('reading-modal');
-        const modalContent = modal.querySelector('.modal-fade-enter');
-        const closeButtons = [
-            document.getElementById('close-modal'),
-            document.getElementById('close-modal-btn')
-        ];
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('reading-modal');
+    const modalContent = modal.querySelector('.modal-fade-enter');
+    const deleteModal = document.getElementById('delete-confirmation-modal');
+    const deleteModalContent = deleteModal.querySelector('.modal-fade-enter');
+    const closeButtons = [
+        document.getElementById('close-modal'),
+        document.getElementById('close-modal-btn')
+    ];
+    const closeDeleteButtons = [
+        document.getElementById('close-delete-modal'),
+        document.getElementById('cancel-delete')
+    ];
 
-        // Data for the modal - Personal readings
-        const personalReadings = {
-            {% if reading_type == 'personal' %}
-            {% for reading in readings.items %}
-            "{{ reading.id }}": {
+    // Build data for personal readings
+    const personalReadings = {};
+    {% if reading_type == 'personal' %}
+        {% for reading in readings.items %}
+            personalReadings["{{ reading.id }}"] = {
+                id: "{{ reading.id }}",
                 book: "{{ reading.book }}",
                 chapter: "{{ reading.chapter }}",
                 date: "{{ format_date(reading.date) }}",
                 version: "{{ reading.bible_version }}",
                 verses: "{{ reading.verses }}",
                 highlights: {{ reading.highlights|tojson|safe if reading.highlights else 'null' }}
-            },
-            {% endfor %}
-            {% endif %}
-        };
+            };
+        {% endfor %}
+    {% endif %}
 
-        // Data for the modal - Group readings
-        const groupReadings = {
-            {% if reading_type == 'group' %}
-            {% for reading, group_name, book in readings.items %}
-            "{{ reading.id }}": {
+    // Build data for group readings
+    const groupReadings = {};
+    {% if reading_type == 'group' %}
+        {% for reading, group_name, book in readings.items %}
+            groupReadings["{{ reading.id }}"] = {
+                id: "{{ reading.id }}",
                 book: "{{ book }}",
                 chapter: "{{ reading.chapter }}",
                 date: "{{ format_date(reading.recorded_date) }}",
                 group: "{{ group_name }}",
                 notes: {{ reading.notes|tojson|safe if reading.notes else 'null' }}
-            },
-            {% endfor %}
-            {% endif %}
-        };
+            };
+        {% endfor %}
+    {% endif %}
 
-        // Open modal when clicking on a row
-        document.querySelectorAll('.reading-row, .view-button').forEach(el => {
-            el.addEventListener('click', function(e) {
-                // If clicking the button, prevent row click from firing twice
-                if (e.target.classList.contains('view-button')) {
-                    e.stopPropagation();
-                }
+    // Function to get reading data based on ID and type
+    function getReadingData(readingId, readingType) {
+        if (readingType === 'personal') {
+            return personalReadings[readingId] || null;
+        } else if (readingType === 'group') {
+            return groupReadings[readingId] || null;
+        }
+        return null;
+    }
 
-                // Get the reading ID and type from the closest row
-                const row = e.target.closest('.reading-row');
-                const readingId = row.dataset.readingId;
-                const readingType = row.dataset.readingType;
+    // Function to open modal with reading data
+    function openReadingModal(readingId, readingType) {
+        const reading = getReadingData(readingId, readingType);
 
-                let reading;
-                if (readingType === 'personal') {
-                    reading = personalReadings[readingId];
-
-                    // Show/hide containers based on reading type
-                    document.getElementById('modal-version-container').classList.remove('hidden');
-                    document.getElementById('modal-group-container').classList.add('hidden');
-
-                    // Set title for personal reading
-                    document.getElementById('modal-title').textContent = `${reading.book} ${reading.chapter}`;
-                    document.getElementById('modal-date').textContent = reading.date;
-                    document.getElementById('modal-version').textContent = reading.version;
-
-                    // Handle verses (optional)
-                    const versesContainer = document.getElementById('modal-verses-container');
-                    if (reading.verses && reading.verses.trim()) {
-                        document.getElementById('modal-verses').textContent = reading.verses;
-                        versesContainer.classList.remove('hidden');
-                    } else {
-                        versesContainer.classList.add('hidden');
-                    }
-
-                    // Handle highlights/notes
-                    const notesContainer = document.getElementById('modal-notes-container');
-                    if (reading.highlights) {
-                        document.getElementById('modal-notes').innerHTML = reading.highlights;
-                        notesContainer.classList.remove('hidden');
-                    } else {
-                        notesContainer.classList.add('hidden');
-                    }
-                } else {
-                    reading = groupReadings[readingId];
-
-                    // Show/hide containers based on reading type
-                    document.getElementById('modal-version-container').classList.add('hidden');
-                    document.getElementById('modal-group-container').classList.remove('hidden');
-                    document.getElementById('modal-verses-container').classList.add('hidden');
-
-                    // Set title for group reading
-                    document.getElementById('modal-title').textContent = `${reading.book} ${reading.chapter}`;
-                    document.getElementById('modal-date').textContent = reading.date;
-                    document.getElementById('modal-group').textContent = reading.group;
-
-                    // Handle notes
-                    const notesContainer = document.getElementById('modal-notes-container');
-                    if (reading.notes) {
-                        document.getElementById('modal-notes').innerHTML = reading.notes;
-                        notesContainer.classList.remove('hidden');
-                    } else {
-                        notesContainer.classList.add('hidden');
-                    }
-                }
-
-                // Show the modal with animation
-                modal.classList.remove('hidden');
-                modalContent.classList.add('modal-fade-enter-active');
-            });
-        });
-
-        // Close modal function
-        function closeModal() {
-            modalContent.classList.remove('modal-fade-enter-active');
-            modalContent.classList.add('modal-fade-exit-active');
-
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modalContent.classList.remove('modal-fade-exit-active');
-            }, 200);
+        if (!reading) {
+            console.error(`Reading data not found for ID: ${readingId}, type: ${readingType}`);
+            return;
         }
 
-        // Close modal when clicking close buttons
-        closeButtons.forEach(button => {
-            button.addEventListener('click', closeModal);
-        });
+        // Set the reading id and type for the delete button in the modal
+        document.getElementById('modal-delete-btn').dataset.readingId = readingId;
+        document.getElementById('modal-delete-btn').dataset.readingType = readingType;
 
-        // Close modal when clicking outside
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal || e.target.classList.contains('backdrop')) {
-                closeModal();
-            }
-        });
+        if (readingType === 'personal') {
+            // Show/hide containers based on reading type
+            document.getElementById('modal-version-container').classList.remove('hidden');
+            document.getElementById('modal-group-container').classList.add('hidden');
 
-        // Close modal on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
+            // Set title and fields for personal reading
+            document.getElementById('modal-title').textContent = `${reading.book} ${reading.chapter}`;
+            document.getElementById('modal-date').textContent = reading.date;
+            document.getElementById('modal-version').textContent = reading.version;
+
+            // Set edit link
+            document.getElementById('modal-edit-link').href = `/edit_reading/${reading.id}`;
+
+            // Handle verses (optional)
+            const versesContainer = document.getElementById('modal-verses-container');
+            if (reading.verses && reading.verses.trim()) {
+                document.getElementById('modal-verses').textContent = reading.verses;
+                versesContainer.classList.remove('hidden');
+            } else {
+                versesContainer.classList.add('hidden');
             }
+
+            // Handle highlights/notes
+            const notesContainer = document.getElementById('modal-notes-container');
+            if (reading.highlights) {
+                document.getElementById('modal-notes').innerHTML = reading.highlights;
+                notesContainer.classList.remove('hidden');
+            } else {
+                notesContainer.classList.add('hidden');
+            }
+        } else {
+            // Show/hide containers based on reading type
+            document.getElementById('modal-version-container').classList.add('hidden');
+            document.getElementById('modal-group-container').classList.remove('hidden');
+            document.getElementById('modal-verses-container').classList.add('hidden');
+
+            // Set title and fields for group reading
+            document.getElementById('modal-title').textContent = `${reading.book} ${reading.chapter}`;
+            document.getElementById('modal-date').textContent = reading.date;
+            document.getElementById('modal-group').textContent = reading.group;
+
+            // Set edit link
+            document.getElementById('modal-edit-link').href = `/edit_group_reading/${reading.id}`;
+
+            // Handle notes
+            const notesContainer = document.getElementById('modal-notes-container');
+            if (reading.notes) {
+                document.getElementById('modal-notes').innerHTML = reading.notes;
+                notesContainer.classList.remove('hidden');
+            } else {
+                notesContainer.classList.add('hidden');
+            }
+        }
+
+        // Show the modal with animation
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modalContent.classList.add('modal-fade-enter-active');
+        }, 10); // Small delay to ensure transition works
+    }
+
+    // Close modal function
+    function closeModal() {
+        modalContent.classList.remove('modal-fade-enter-active');
+        modalContent.classList.add('modal-fade-exit-active');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modalContent.classList.remove('modal-fade-exit-active');
+        }, 200);
+    }
+
+    // Function to open delete confirmation modal
+    function openDeleteConfirmationModal(readingId, readingType) {
+        // Set the reading id and type in hidden fields
+        document.getElementById('delete-reading-id').value = readingId;
+        document.getElementById('delete-reading-type').value = readingType;
+
+        // Show the modal with animation
+        deleteModal.classList.remove('hidden');
+        setTimeout(() => {
+            deleteModalContent.classList.add('modal-fade-enter-active');
+        }, 10);
+    }
+
+    // Close delete modal function
+    function closeDeleteModal() {
+        deleteModalContent.classList.remove('modal-fade-enter-active');
+        deleteModalContent.classList.add('modal-fade-exit-active');
+
+        setTimeout(() => {
+            deleteModal.classList.add('hidden');
+            deleteModalContent.classList.remove('modal-fade-exit-active');
+        }, 200);
+    }
+
+    // Function to handle delete confirmation
+    function handleDeleteConfirmation() {
+        const readingId = document.getElementById('delete-reading-id').value;
+        const readingType = document.getElementById('delete-reading-type').value;
+
+        // Determine the endpoint based on reading type
+        const endpoint = readingType === 'personal'
+            ? `/delete_reading/${readingId}`
+            : `/delete_group_reading/${readingId}`;
+
+        // Send DELETE request
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken() // You'll need to implement this function to get the CSRF token
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Reload the page to reflect the changes
+                window.location.reload();
+            } else {
+                console.error('Failed to delete reading');
+                // Optionally show an error message
+                alert('Failed to delete reading. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        })
+        .finally(() => {
+            closeDeleteModal();
+        });
+    }
+
+    // Helper function to get CSRF token
+    function getCsrfToken() {
+        // Try to get from meta tag
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            return metaTag.getAttribute('content');
+        }
+
+        // Or from cookie (adjust as needed based on your Flask setup)
+        const csrfCookie = document.cookie.split(';')
+            .find(cookie => cookie.trim().startsWith('csrf_token='));
+
+        if (csrfCookie) {
+            return csrfCookie.split('=')[1];
+        }
+
+        return '';
+    }
+
+    // Add event listeners to reading rows
+    document.querySelectorAll('.reading-row').forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Prevent handling if clicked on a button
+            if (e.target.closest('.edit-button') || e.target.closest('.view-button') || e.target.closest('.delete-button')) {
+                return;
+            }
+
+            const readingId = this.dataset.readingId;
+            const readingType = this.dataset.readingType;
+            openReadingModal(readingId, readingType);
         });
     });
+
+    // Add event listeners to view buttons
+    document.querySelectorAll('.view-button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const readingId = this.dataset.readingId;
+            const readingType = this.dataset.readingType;
+            openReadingModal(readingId, readingType);
+        });
+    });
+
+    // Add event listeners to delete buttons in the table/cards
+    document.querySelectorAll('.delete-button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const readingId = this.dataset.readingId;
+            const readingType = this.dataset.readingType;
+            openDeleteConfirmationModal(readingId, readingType);
+        });
+    });
+
+    // Add event listener to delete button in the modal
+    document.getElementById('modal-delete-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const readingId = this.dataset.readingId;
+        const readingType = this.dataset.readingType;
+
+        // Close the details modal
+        closeModal();
+
+        // Open the delete confirmation modal
+        openDeleteConfirmationModal(readingId, readingType);
+    });
+
+    // Add event listener to confirm delete button
+    document.getElementById('confirm-delete').addEventListener('click', handleDeleteConfirmation);
+
+    // Prevent propagation on edit buttons to avoid opening the modal
+    document.querySelectorAll('.edit-button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+
+    // Close modal when clicking close buttons
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal();
+        });
+    });
+
+    // Close delete modal when clicking close buttons
+    closeDeleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeDeleteModal();
+        });
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close delete modal when clicking outside
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === deleteModal) {
+            closeDeleteModal();
+        }
+    });
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (!modal.classList.contains('hidden')) {
+                closeModal();
+            }
+            if (!deleteModal.classList.contains('hidden')) {
+                closeDeleteModal();
+            }
+        }
+    });
+});
 </script>
+
 {% endblock %}

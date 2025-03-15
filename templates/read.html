@@ -63,11 +63,14 @@
                     </div>
 
                     <!-- Highlights or Notes with Rich Text Editor -->
-                    <div>
-                        <label class="block text-gray-700 mb-2 font-semibold">Personal Highlights/Notes</label>
-                        <div id="editor-container" class="border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[150px]"></div>
-                        <input type="hidden" name="highlights" id="highlights-input">
-                    </div>
+                    <div class="space-y-4">
+    <label class="block text-gray-800 text-lg font-semibold">Personal Highlights/Notes</label>
+    <div id="editor-container" class="border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 min-h-[150px] p-4 bg-white"></div>
+    <input type="hidden" name="highlights" id="highlights-input">
+</div>
+
+
+
 
                     <!-- Hidden Version Input -->
                     <input type="hidden" name="version" id="version-input" value="{{ selected_version }}">
@@ -152,9 +155,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('highlights-input').value = quill.root.innerHTML;
     });
 
-    function loadChapters() {
+    function loadChapters(preserveChapter = false) {
         const version = versionSelect.value;
         const book = bookSelect.value;
+        const currentChapter = chapterSelect.value; // Store current chapter before refreshing options
 
         fetch(`/get_chapters/${version}/${book}`)
             .then(response => response.json())
@@ -166,6 +170,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     option.textContent = `Chapter ${chapter}`;
                     chapterSelect.appendChild(option);
                 });
+
+                // If preserveChapter is true and the current chapter exists in the new set of chapters,
+                // restore the previously selected chapter
+                if (preserveChapter && currentChapter) {
+                    // Find if the previously selected chapter exists in the new options
+                    const chapterExists = Array.from(chapterSelect.options).some(option => option.value === currentChapter);
+
+                    if (chapterExists) {
+                        chapterSelect.value = currentChapter;
+                    }
+                }
+
                 loadBibleContent();
             });
     }
@@ -174,6 +190,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const version = versionSelect.value;
         const book = bookSelect.options[bookSelect.selectedIndex].text;
         const chapter = chapterSelect.value;
+
+        if (!chapter) {
+            return; // Don't load if no chapter is selected
+        }
 
         versionInput.value = version;
         contentDivMobile.innerHTML = 'Loading...';
@@ -218,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const chapterHeader = `
                     <div class="chapter-header text-xl font-semibold text-gray-800 mb-4">
-                        ${book} Chapter ${chapter}
+                        ${book} Chapter ${chapter} (${version})
                     </div>
                     <div class="chapter-content">
                         ${formattedContent}
@@ -239,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         quoteButton.addEventListener('click', function() {
                             const verseNumber = verse.querySelector('.verse-number').textContent.trim();
                             const verseText = verse.querySelector('.verse-text').textContent.trim();
-                            const quoteText = `<blockquote>${book} ${chapter}:${verseNumber} - "${verseText}"</blockquote><p><br></p>`;
+                            const quoteText = `<blockquote>${book} ${chapter}:${verseNumber} - "${verseText}" (${version})</blockquote><p><br></p>`;
                             const range = quill.getSelection(true);
                             quill.clipboard.dangerouslyPasteHTML(range.index, quoteText);
                         });
@@ -291,8 +311,8 @@ document.addEventListener('DOMContentLoaded', function() {
         contentDivDesktop.classList.toggle('hidden');
     });
 
-    bookSelect.addEventListener('change', loadChapters);
-    versionSelect.addEventListener('change', loadChapters);
+    bookSelect.addEventListener('change', () => loadChapters(false)); // Don't preserve chapter when book changes
+    versionSelect.addEventListener('change', () => loadChapters(true)); // Preserve chapter when version changes
     chapterSelect.addEventListener('change', loadBibleContent);
 
     // Initial load
