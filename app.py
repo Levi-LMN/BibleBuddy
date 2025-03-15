@@ -1122,6 +1122,45 @@ def admin_edit_group(group_id):
     return render_template('admin/edit_group.html', group=group)
 
 
+@app.route('/admin/group_readings')
+@login_required
+@admin_required
+def admin_group_readings():
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+
+    # Join with ReadingGroup and User to get their names
+    group_readings = db.session.query(
+        GroupReading,
+        ReadingGroup.name.label('group_name'),
+        User.name.label('user_name')
+    ).join(
+        ReadingGroup, GroupReading.group_id == ReadingGroup.id
+    ).join(
+        User, GroupReading.user_id == User.id
+    ).order_by(
+        GroupReading.recorded_date.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template('admin/group_readings.html', group_readings=group_readings)
+
+
+@app.route('/admin/group_readings/<int:reading_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_group_reading(reading_id):
+    reading = GroupReading.query.get_or_404(reading_id)
+
+    try:
+        db.session.delete(reading)
+        db.session.commit()
+        flash('Group reading deleted successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting group reading: {str(e)}')
+
+    return redirect(url_for('admin_group_readings'))
+
 @app.route('/admin/groups/<int:group_id>/delete', methods=['POST'])
 @login_required
 @admin_required

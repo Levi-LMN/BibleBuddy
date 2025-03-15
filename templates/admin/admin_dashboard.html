@@ -1,48 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-gray-800">Admin Dashboard</h1>
+<div class="container mx-auto p-8">
+    <h1 class="text-4xl font-semibold mb-8 text-gray-900">Admin Dashboard</h1>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">User Statistics</h2>
-            <p class="text-lg font-medium mb-2">Total Users: <span class="text-blue-600">{{ total_users }}</span></p>
-            <ul class="space-y-1">
+        <div class="bg-gray-100 rounded-lg p-6">
+            <h2 class="text-lg font-medium text-gray-800">User Statistics</h2>
+            <p class="text-gray-700 mt-2">Total Users: <span class="text-blue-500 font-semibold">{{ total_users }}</span></p>
+            <ul class="mt-2 text-gray-600">
                 {% for version, count in users_by_version %}
-                    <li class="text-gray-600">{{ version }}: <span class="font-bold">{{ count }}</span></li>
+                    <li>{{ version }}: <span class="font-medium">{{ count }}</span></li>
                 {% endfor %}
             </ul>
         </div>
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">Reading Statistics</h2>
-            <p class="text-lg font-medium mb-2">Total Readings: <span class="text-green-600">{{ total_readings }}</span></p>
-            <ul class="space-y-1">
+        <div class="bg-gray-100 rounded-lg p-6">
+            <h2 class="text-lg font-medium text-gray-800">Reading Statistics</h2>
+            <p class="text-gray-700 mt-2">Total Readings: <span class="text-green-500 font-semibold">{{ total_readings }}</span></p>
+            <ul class="mt-2 text-gray-600">
                 {% for version, count in readings_by_version %}
-                    <li class="text-gray-600">{{ version }}: <span class="font-bold">{{ count }}</span></li>
+                    <li>{{ version }}: <span class="font-medium">{{ count }}</span></li>
                 {% endfor %}
             </ul>
         </div>
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">Group Statistics</h2>
-            <p class="text-lg font-medium mb-2">Total Groups: <span class="text-purple-600">{{ total_groups }}</span></p>
-            <ul class="space-y-1">
+        <div class="bg-gray-100 rounded-lg p-6">
+            <h2 class="text-lg font-medium text-gray-800">Group Statistics</h2>
+            <p class="text-gray-700 mt-2">Total Groups: <span class="text-purple-500 font-semibold">{{ total_groups }}</span></p>
+            <ul class="mt-2 text-gray-600">
                 {% for visibility, count in groups_by_visibility %}
-                    <li class="text-gray-600">{{ visibility }}: <span class="font-bold">{{ count }}</span></li>
+                    <li>{{ visibility }}: <span class="font-medium">{{ count }}</span></li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 
-    <div class="mt-8 flex space-x-4 justify-center">
-        <a href="{{ url_for('admin_users') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Manage Users
-        </a>
-        <a href="{{ url_for('admin_groups') }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-            Manage Groups
-        </a>
-        <a href="{{ url_for('admin_readings') }}" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">
-            Manage Readings
-        </a>
+    <div class="mt-10 flex flex-wrap justify-center gap-4">
+        <a href="{{ url_for('admin_users') }}" class="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">Manage Users</a>
+        <a href="{{ url_for('admin_groups') }}" class="px-6 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700">Manage Groups</a>
+        <a href="{{ url_for('admin_readings') }}" class="px-6 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700">Manage Readings</a>
+        <a href="{{ url_for('admin_group_readings') }}" class="px-6 py-2 text-white bg-gray-800 rounded-lg hover:bg-gray-900">Group Readings</a>
     </div>
 </div>
 {% endblock %}
