@@ -3,10 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BibleFlow</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <title>BibleFlow - Your Modern Bible Reading Platform</title>
+
+    <!-- Meta Description & Keywords -->
+    <meta name="description" content="BibleFlow is your modern platform for reading, sharing, and engaging with the Bible. Join our community and explore scripture in a dynamic and interactive way.">
+    <meta name="keywords" content="Bible, Scripture, BibleFlow, reading, community, Christianity, Bible study">
+
+    <!-- Robots & Canonical -->
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://bibleflow.com">
+
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="BibleFlow - Your Modern Bible Reading Platform">
+    <meta property="og:description" content="BibleFlow is your modern platform for reading, sharing, and engaging with the Bible. Join our community and explore scripture in a dynamic and interactive way.">
+    <meta property="og:image" content="https://richardesimmons3.com/wp-content/uploads/2022/02/rod-long-DRgrzQQsJDA-unsplash-scaled.jpg">
+    <meta property="og:url" content="https://bibleflow.com">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BibleFlow - Your Modern Bible Reading Platform">
+    <meta name="twitter:description" content="BibleFlow is your modern platform for reading, sharing, and engaging with the Bible. Join our community and explore scripture in a dynamic and interactive way.">
+    <meta name="twitter:image" content="https://richardesimmons3.com/wp-content/uploads/2022/02/rod-long-DRgrzQQsJDA-unsplash-scaled.jpg">
+
+    <!-- Favicon -->
     <link rel="icon" href="https://richardesimmons3.com/wp-content/uploads/2022/02/rod-long-DRgrzQQsJDA-unsplash-scaled.jpg">
+
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Feather Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <!-- Structured Data Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "BibleFlow",
+      "url": "https://bibleflow.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://bibleflow.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <nav class="bg-white shadow-md">
@@ -113,7 +155,7 @@
         {% endif %}
     </nav>
 
-    <!-- Rest of the existing HTML remains the same -->
+    <!-- Main Content -->
     <main class="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
