@@ -21,7 +21,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <form method="POST" class="p-6 space-y-4">
+                <form method="POST" class="p-6 space-y-4" id="reading-form">
                     <!-- Book Selection -->
                     <div>
                         <label class="block text-gray-700 mb-2 font-semibold">Book</label>
@@ -64,13 +64,10 @@
 
                     <!-- Highlights or Notes with Rich Text Editor -->
                     <div class="space-y-4">
-    <label class="block text-gray-800 text-lg font-semibold">Personal Highlights/Notes</label>
-    <div id="editor-container" class="border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 min-h-[150px] p-4 bg-white"></div>
-    <input type="hidden" name="highlights" id="highlights-input">
-</div>
-
-
-
+                        <label class="block text-gray-800 text-lg font-semibold">Personal Highlights/Notes</label>
+                        <div id="editor-container" class="border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 min-h-[150px] p-4 bg-white"></div>
+                        <input type="hidden" name="highlights" id="highlights-input">
+                    </div>
 
                     <!-- Hidden Version Input -->
                     <input type="hidden" name="version" id="version-input" value="{{ selected_version }}">
@@ -132,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const contentDivDesktop = document.getElementById('bible-content-desktop');
     const toggleContentButtonMobile = document.getElementById('toggle-chapter-content');
     const toggleContentButtonDesktop = document.getElementById('toggle-chapter-content-desktop');
+    const readingForm = document.getElementById('reading-form');
 
     // Initialize Quill rich text editor
     const quill = new Quill('#editor-container', {
@@ -150,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Handle form submission to include Quill content
-    document.querySelector('form').addEventListener('submit', function() {
+    readingForm.addEventListener('submit', function() {
         // Get the HTML content from Quill and store it in the hidden input
         document.getElementById('highlights-input').value = quill.root.innerHTML;
     });
@@ -254,25 +252,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     const verses = document.querySelectorAll('.verse');
                     verses.forEach(verse => {
                         const quoteButton = document.createElement('button');
+                        quoteButton.setAttribute('type', 'button'); // Important: Prevents form submission
                         quoteButton.className = 'ml-2 px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300';
                         quoteButton.innerHTML = 'Quote';
-                        quoteButton.addEventListener('click', function() {
+                        quoteButton.addEventListener('click', function(e) {
+                            e.preventDefault(); // Prevent any default action
+                            e.stopPropagation(); // Stop event bubbling
+
                             const verseNumber = verse.querySelector('.verse-number').textContent.trim();
                             const verseText = verse.querySelector('.verse-text').textContent.trim();
                             const quoteText = `<blockquote>${book} ${chapter}:${verseNumber} - "${verseText}" (${version})</blockquote><p><br></p>`;
                             const range = quill.getSelection(true);
                             quill.clipboard.dangerouslyPasteHTML(range.index, quoteText);
+
+                            return false; // Further prevent default behavior
                         });
                         verse.appendChild(quoteButton);
                     });
                 }
 
-                // Add copy functionality to both
+                // Add copy functionality to both mobile and desktop
                 function addCopyButton(contentDiv) {
                     const copyButton = document.createElement('button');
                     copyButton.innerHTML = 'Copy Chapter';
+                    // Important: Explicitly set button type to prevent form submission
+                    copyButton.setAttribute('type', 'button');
                     copyButton.className = 'mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600';
-                    copyButton.addEventListener('click', () => {
+
+                    copyButton.addEventListener('click', function(e) {
+                        e.preventDefault(); // Prevent any default action
+                        e.stopPropagation(); // Stop event bubbling
+
                         const chapterText = Array.from(contentDiv.querySelectorAll('.verse'))
                             .map(verse => {
                                 const number = verse.querySelector('.verse-number').textContent.trim();
@@ -284,6 +294,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         navigator.clipboard.writeText(chapterText).then(() => {
                             alert('Chapter copied to clipboard!');
                         });
+
+                        return false; // Further prevent default behavior
                     });
 
                     contentDiv.appendChild(copyButton);
