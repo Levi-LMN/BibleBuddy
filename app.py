@@ -11,6 +11,17 @@ import secrets
 import json
 from flask import session
 import uuid
+# Add these imports at the top of your file
+from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
+from flask_dance.consumer import oauth_authorized
+from sqlalchemy.orm.exc import NoResultFound
+import os
+from authlib.integrations.flask_client import OAuth
+import json
+from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
+from dotenv import load_dotenv
+
 
 
 app = Flask(__name__)
@@ -18,6 +29,7 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bible_tracker.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['BIBLE_API_KEY'] = '8a0917d65309e51e5e9181896306b9d9'
+load_dotenv()  # Add this near the top of your application
 
 # Cache configuration
 cache = Cache(app, config={
@@ -29,7 +41,6 @@ BIBLE_VERSIONS = {
     'KJV': 'de4e12af7f28f599-02',
     'WEB': '9879dbb7cfe39e4d-01',
     'ASV': '06125adad2d5898a-01',
-    'BSB': 'bba9f40183526463-01',
     'NLT': '65eec8e0b60e656b-01',
     'ESV': '9879dbb7cfe39e4d-01'
 }
@@ -39,6 +50,23 @@ app.config['DEFAULT_BIBLE_VERSION'] = 'KJV'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# for development
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+
+# Set up Google OAuth blueprint with proper redirect URI
+google_bp = make_google_blueprint(
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    scope=["https://www.googleapis.com/auth/userinfo.profile",
+           "https://www.googleapis.com/auth/userinfo.email",
+           "openid"],
+    redirect_to="home",  # Redirect to home page after authorization
+    storage=SQLAlchemyStorage(OAuth, db.session, user=current_user)
+)
+
+app.register_blueprint(google_bp, url_prefix="/login")
 
 
 # Database Models with indexes
@@ -112,8 +140,25 @@ class GroupReading(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     chapter = db.Column(db.Integer, nullable=False)
     completion_date = db.Column(db.DateTime, default=datetime.utcnow)
+    recorded_date = db.Column(db.DateTime, default=datetime.utcnow)  # New field
     notes = db.Column(db.Text)
 
+
+
+
+
+
+class OAuth(db.Model, OAuthConsumerMixin):
+    __tablename__ = 'oauth'
+
+    provider = db.Column(db.String(50), nullable=False)
+    provider_user_id = db.Column(db.String(256), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User')
+
+    # Don't add a token column - OAuthConsumerMixin provides it with proper serialization
+
+    __table_args__ = (db.UniqueConstraint('provider', 'provider_user_id'),)
 
 # Bible API helper functions with caching
 @cache.memoize(timeout=86400)
@@ -604,7 +649,8 @@ def record_group_reading(group_id):
             group_id=group_id,
             user_id=current_user.id,
             chapter=chapter,
-            notes=notes
+            notes=notes,
+            recorded_date=datetime.utcnow()  # Set the recorded date explicitly
         )
         db.session.add(reading)
 
@@ -625,7 +671,6 @@ def record_group_reading(group_id):
         flash('An error occurred while recording the reading.')
 
     return redirect(url_for('view_group', group_id=group_id))
-
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -651,17 +696,43 @@ def profile():
                          reading_stats=reading_stats,
                          group_stats=group_stats)
 
+
 @app.route('/history')
 @login_required
 def history():
     page = request.args.get('page', 1, type=int)
-    per_page = 10
+    reading_type = request.args.get('type', 'personal')
 
-    readings = Reading.query.filter_by(user_id=current_user.id)\
-        .order_by(Reading.date.desc())\
-        .paginate(page=page, per_page=per_page, error_out=False)
+    if reading_type == 'personal':
+        # Get personal readings
+        readings = Reading.query.filter_by(user_id=current_user.id) \
+            .order_by(Reading.date.desc()) \
+            .paginate(page=page, per_page=10)
+    else:
+        # Get group readings - Use recorded_date instead of date
+        group_readings_query = db.session.query(
+            GroupReading,
+            ReadingGroup.name.label('group_name'),
+            ReadingGroup.book.label('book')
+        ).join(
+            ReadingGroup,
+            GroupReading.group_id == ReadingGroup.id
+        ).filter(
+            GroupReading.user_id == current_user.id
+        ).order_by(
+            GroupReading.recorded_date.desc()  # Changed from date to recorded_date
+        )
 
-    return render_template('history.html', readings=readings)
+        readings = group_readings_query.paginate(page=page, per_page=10)
+
+    def format_date(date):
+        return date.strftime("%B %d, %Y")
+
+    return render_template('history.html',
+                           readings=readings,
+                           reading_type=reading_type,
+                           format_date=format_date)
+
 
 @app.route('/groups/<int:group_id>/leave')
 @login_required
@@ -1169,6 +1240,98 @@ def delete_group(group_id):
         db.session.rollback()
         flash(f'Error deleting group: {str(e)}')
         return redirect(url_for('view_group', group_id=group_id))
+
+
+# Handle Google OAuth login
+@oauth_authorized.connect_via(google_bp)
+def google_logged_in(blueprint, token):
+    if not token:
+        flash("Failed to log in with Google.", category="error")
+        return False
+
+    resp = blueprint.session.get("/oauth2/v1/userinfo")
+    if not resp.ok:
+        msg = "Failed to fetch user info from Google."
+        flash(msg, category="error")
+        return False
+
+    google_info = resp.json()
+    google_user_id = google_info["id"]
+
+    # Find this OAuth token in the database, or create it
+    query = OAuth.query.filter_by(
+        provider=blueprint.name,
+        provider_user_id=google_user_id,
+    )
+    try:
+        oauth = query.one()
+    except NoResultFound:
+        oauth = OAuth(
+            provider=blueprint.name,
+            provider_user_id=google_user_id,
+            token=token,
+        )
+
+    if oauth.user:
+        # If this OAuth token has a user, log them in
+        login_user(oauth.user)
+        flash("Successfully signed in with Google.")
+
+        # Update session variables
+        session['user_id'] = oauth.user.id
+        session['user_name'] = oauth.user.name
+        session['user_email'] = oauth.user.email
+
+    else:
+        # If no user is associated with this token, check if the email exists
+        user = User.query.filter_by(email=google_info["email"]).first()
+
+        if user:
+            # Connect the existing account to this OAuth token
+            oauth.user = user
+            db.session.add(oauth)
+            db.session.commit()
+            login_user(user)
+            flash("Successfully signed in with Google.")
+
+            # Update session variables
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            session['user_email'] = user.email
+        else:
+            # Create a new user account with information from Google
+            user = User(
+                name=google_info["name"],
+                email=google_info["email"],
+                password_hash=generate_password_hash(secrets.token_hex(16)),  # Random secure password
+                preferred_version='KJV'  # Default Bible version
+            )
+            db.session.add(user)
+            oauth.user = user
+            db.session.add(oauth)
+            db.session.commit()
+            login_user(user)
+            flash("Successfully signed in with Google.")
+
+            # Update session variables
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            session['user_email'] = user.email
+
+    # Disable Flask-Dance's default behavior for saving the OAuth token
+    return False
+
+
+# Add a Google login route
+@app.route('/login/google')
+def google_login():
+    if not google.authorized:
+        return redirect(url_for('google.login'))
+    return redirect(url_for('home'))
+
+# Debug code to add temporarily
+# print(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
+# print(f"GOOGLE_CLIENT_SECRET: {os.environ.get('GOOGLE_CLIENT_SECRET')}")
 
 if __name__ == '__main__':
     with app.app_context():

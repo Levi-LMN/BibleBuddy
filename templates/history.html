@@ -1,78 +1,319 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading History</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    {% extends "base.html" %}
+{% extends "base.html" %}
 
-    {% block content %}
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-800">Your Reading History</h1>
-            </div>
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800">Your Reading History</h1>
+        </div>
 
-            {% if readings.items %}
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chapter</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+        <!-- Tab navigation -->
+        <div class="flex border-b border-gray-200">
+            <a href="{{ url_for('history', type='personal') }}"
+               class="px-6 py-3 text-center font-medium {{ 'text-blue-600 border-b-2 border-blue-500' if reading_type == 'personal' else 'text-gray-500 hover:text-gray-700' }}">
+                Personal Readings
+            </a>
+            <a href="{{ url_for('history', type='group') }}"
+               class="px-6 py-3 text-center font-medium {{ 'text-blue-600 border-b-2 border-blue-500' if reading_type == 'group' else 'text-gray-500 hover:text-gray-700' }}">
+                Group Readings
+            </a>
+        </div>
+
+        {% if readings.items %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        {% if reading_type == 'group' %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
+                        {% endif %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chapter</th>
+                        {% if reading_type == 'personal' %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                        {% endif %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% if reading_type == 'personal' %}
                         {% for reading in readings.items %}
-                        <tr class="hover:bg-gray-50 transition duration-200">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ format_date(reading.date) }}</td>
+                        <tr class="hover:bg-gray-50 transition duration-200 cursor-pointer reading-row"
+                            data-reading-id="{{ reading.id }}"
+                            data-reading-type="personal">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ format_date(reading.date) }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reading.book }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.chapter }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.bible_version }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200">
+                                    View Details
+                                </button>
+                            </td>
                         </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if readings.pages > 1 %}
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-                <div class="text-sm text-gray-600">
-                    Page {{ readings.page }} of {{ readings.pages }}
-                </div>
-                <div class="flex space-x-2">
-                    {% if readings.has_prev %}
-                    <a href="{{ url_for('history', page=readings.prev_num) }}"
-                       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
-                        Previous
-                    </a>
+                    {% else %}
+                        {% for reading, group_name, book in readings.items %}
+                        <tr class="hover:bg-gray-50 transition duration-200 cursor-pointer reading-row"
+                            data-reading-id="{{ reading.id }}"
+                            data-reading-type="group">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ format_date(reading.recorded_date) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ group_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ book }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reading.chapter }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                <button class="view-button bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition duration-200">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
                     {% endif %}
+                </tbody>
+            </table>
+        </div>
 
-                    {% if readings.has_next %}
-                    <a href="{{ url_for('history', page=readings.next_num) }}"
-                       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
-                        Next
-                    </a>
-                    {% endif %}
-                </div>
+        {% if readings.pages > 1 %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+            <div class="text-sm text-gray-600">
+                Page {{ readings.page }} of {{ readings.pages }}
             </div>
-            {% endif %}
-
-            {% else %}
-            <div class="p-6 text-center text-gray-600">
-                <p>You haven't recorded any readings yet. Start reading to track your progress!</p>
-                <a href="{{ url_for('read') }}" class="mt-4 inline-block px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
-                    Start Reading
+            <div class="flex space-x-2">
+                {% if readings.has_prev %}
+                <a href="{{ url_for('history', type=reading_type, page=readings.prev_num) }}"
+                   class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                    Previous
                 </a>
+                {% endif %}
+
+                {% if readings.has_next %}
+                <a href="{{ url_for('history', type=reading_type, page=readings.next_num) }}"
+                   class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                    Next
+                </a>
+                {% endif %}
             </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="p-6 text-center text-gray-600">
+            <p>You haven't recorded any {{ reading_type }} readings yet.</p>
+            {% if reading_type == 'personal' %}
+            <a href="{{ url_for('read') }}" class="mt-4 inline-block px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                Start Reading
+            </a>
+            {% else %}
+            <a href="{{ url_for('list_groups') }}" class="mt-4 inline-block px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300">
+                View Your Groups
+            </a>
             {% endif %}
         </div>
+        {% endif %}
     </div>
-    {% endblock %}
-</body>
-</html>
+</div>
+
+<!-- Reading Detail Modal -->
+<div id="reading-modal" class="fixed inset-0 z-50 hidden overflow-auto">
+    <div class="backdrop fixed inset-0"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-3xl rounded-lg shadow-xl overflow-hidden relative modal-fade-enter">
+            <!-- Modal Header -->
+            <div class="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                <div class="flex justify-between items-center">
+                    <h3 id="modal-title" class="text-xl font-bold"></h3>
+                    <button id="close-modal" class="focus:outline-none text-white hover:text-gray-200">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <div class="text-sm font-medium text-gray-500">Date</div>
+                        <div id="modal-date" class="text-lg text-gray-800"></div>
+                    </div>
+                    <div id="modal-version-container">
+                        <div class="text-sm font-medium text-gray-500">Bible Version</div>
+                        <div id="modal-version" class="text-lg text-gray-800"></div>
+                    </div>
+                    <div id="modal-group-container" class="hidden">
+                        <div class="text-sm font-medium text-gray-500">Group</div>
+                        <div id="modal-group" class="text-lg text-gray-800"></div>
+                    </div>
+                </div>
+
+                <div id="modal-verses-container" class="mb-6 hidden">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Verses Read</div>
+                    <div id="modal-verses" class="text-lg text-gray-800"></div>
+                </div>
+
+                <div id="modal-notes-container" class="">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Notes</div>
+                    <div id="modal-notes" class="rich-text-content prose max-w-none bg-gray-50 p-4 rounded-lg border border-gray-200"></div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button id="close-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('reading-modal');
+        const modalContent = modal.querySelector('.modal-fade-enter');
+        const closeButtons = [
+            document.getElementById('close-modal'),
+            document.getElementById('close-modal-btn')
+        ];
+
+        // Data for the modal - Personal readings
+        const personalReadings = {
+            {% if reading_type == 'personal' %}
+            {% for reading in readings.items %}
+            "{{ reading.id }}": {
+                book: "{{ reading.book }}",
+                chapter: "{{ reading.chapter }}",
+                date: "{{ format_date(reading.date) }}",
+                version: "{{ reading.bible_version }}",
+                verses: "{{ reading.verses }}",
+                highlights: {{ reading.highlights|tojson|safe if reading.highlights else 'null' }}
+            },
+            {% endfor %}
+            {% endif %}
+        };
+
+        // Data for the modal - Group readings
+        const groupReadings = {
+            {% if reading_type == 'group' %}
+            {% for reading, group_name, book in readings.items %}
+            "{{ reading.id }}": {
+                book: "{{ book }}",
+                chapter: "{{ reading.chapter }}",
+                date: "{{ format_date(reading.recorded_date) }}",
+                group: "{{ group_name }}",
+                notes: {{ reading.notes|tojson|safe if reading.notes else 'null' }}
+            },
+            {% endfor %}
+            {% endif %}
+        };
+
+        // Open modal when clicking on a row
+        document.querySelectorAll('.reading-row, .view-button').forEach(el => {
+            el.addEventListener('click', function(e) {
+                // If clicking the button, prevent row click from firing twice
+                if (e.target.classList.contains('view-button')) {
+                    e.stopPropagation();
+                }
+
+                // Get the reading ID and type from the closest row
+                const row = e.target.closest('.reading-row');
+                const readingId = row.dataset.readingId;
+                const readingType = row.dataset.readingType;
+
+                let reading;
+                if (readingType === 'personal') {
+                    reading = personalReadings[readingId];
+
+                    // Show/hide containers based on reading type
+                    document.getElementById('modal-version-container').classList.remove('hidden');
+                    document.getElementById('modal-group-container').classList.add('hidden');
+
+                    // Set title for personal reading
+                    document.getElementById('modal-title').textContent = `${reading.book} ${reading.chapter}`;
+                    document.getElementById('modal-date').textContent = reading.date;
+                    document.getElementById('modal-version').textContent = reading.version;
+
+                    // Handle verses (optional)
+                    const versesContainer = document.getElementById('modal-verses-container');
+                    if (reading.verses && reading.verses.trim()) {
+                        document.getElementById('modal-verses').textContent = reading.verses;
+                        versesContainer.classList.remove('hidden');
+                    } else {
+                        versesContainer.classList.add('hidden');
+                    }
+
+                    // Handle highlights/notes
+                    const notesContainer = document.getElementById('modal-notes-container');
+                    if (reading.highlights) {
+                        document.getElementById('modal-notes').innerHTML = reading.highlights;
+                        notesContainer.classList.remove('hidden');
+                    } else {
+                        notesContainer.classList.add('hidden');
+                    }
+                } else {
+                    reading = groupReadings[readingId];
+
+                    // Show/hide containers based on reading type
+                    document.getElementById('modal-version-container').classList.add('hidden');
+                    document.getElementById('modal-group-container').classList.remove('hidden');
+                    document.getElementById('modal-verses-container').classList.add('hidden');
+
+                    // Set title for group reading
+                    document.getElementById('modal-title').textContent = `${reading.book} ${reading.chapter}`;
+                    document.getElementById('modal-date').textContent = reading.date;
+                    document.getElementById('modal-group').textContent = reading.group;
+
+                    // Handle notes
+                    const notesContainer = document.getElementById('modal-notes-container');
+                    if (reading.notes) {
+                        document.getElementById('modal-notes').innerHTML = reading.notes;
+                        notesContainer.classList.remove('hidden');
+                    } else {
+                        notesContainer.classList.add('hidden');
+                    }
+                }
+
+                // Show the modal with animation
+                modal.classList.remove('hidden');
+                modalContent.classList.add('modal-fade-enter-active');
+            });
+        });
+
+        // Close modal function
+        function closeModal() {
+            modalContent.classList.remove('modal-fade-enter-active');
+            modalContent.classList.add('modal-fade-exit-active');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modalContent.classList.remove('modal-fade-exit-active');
+            }, 200);
+        }
+
+        // Close modal when clicking close buttons
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closeModal);
+        });
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal || e.target.classList.contains('backdrop')) {
+                closeModal();
+            }
+        });
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    });
+</script>
+{% endblock %}

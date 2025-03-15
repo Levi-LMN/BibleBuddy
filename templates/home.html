@@ -110,7 +110,10 @@
                                 </span>
                             </div>
                             {% if reading.highlights %}
-                                <p class="mt-2 text-sm text-gray-700">{{ reading.highlights }}</p>
+                                <p class="mt-2 text-sm text-gray-700">
+                                    {{ reading.highlights[:40]|safe }}{% if reading.highlights|length > 40 %}...{% endif %}
+                                </p>
+
                             {% endif %}
                         </div>
                     {% endfor %}
