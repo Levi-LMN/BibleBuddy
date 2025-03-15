@@ -21,6 +21,8 @@ from authlib.integrations.flask_client import OAuth
 import json
 from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from dotenv import load_dotenv
+from flask_mail import Mail, Message
+import threading
 
 
 
@@ -30,6 +32,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bible_tracker.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['BIBLE_API_KEY'] = '8a0917d65309e51e5e9181896306b9d9'
 load_dotenv()  # Add this near the top of your application
+
+# Set up mail configuration
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@bibletracker.app')
+
+# Initialize mail
+mail = Mail(app)
 
 # Cache configuration
 cache = Cache(app, config={
@@ -390,7 +403,7 @@ def read():
                            selected_version=selected_version)
 
 
-
+# Update the create_group function to send emails for invitation-only groups
 @app.route('/groups/create', methods=['GET', 'POST'])
 @login_required
 def create_group():
@@ -460,6 +473,10 @@ def create_group():
                         expires_at=datetime.utcnow() + timedelta(days=7)
                     )
                     db.session.add(invitation)
+                    db.session.flush()  # This gives the invitation an ID before commit
+
+                    # Send invitation email
+                    send_invitation_email(invitation, group.name, current_user.name)
 
             db.session.commit()
 
@@ -474,10 +491,9 @@ def create_group():
 
     # Existing GET route code remains the same
     version_id = BIBLE_VERSIONS.get(current_user.preferred_version,
-                                  BIBLE_VERSIONS[app.config['DEFAULT_BIBLE_VERSION']])
+                                    BIBLE_VERSIONS[app.config['DEFAULT_BIBLE_VERSION']])
     bible_books = get_bible_books(version_id)
     return render_template('groups/create.html', books=bible_books)
-
 
 @app.route('/groups/<int:group_id>/join', methods=['GET', 'POST'])
 @login_required
@@ -826,6 +842,127 @@ def utility_processor():
     return dict(format_date=format_date, get_group_completion=get_group_completion)
 
 
+# Function to send emails asynchronously
+def send_async_email(app_context, msg):
+    with app_context:
+        try:
+            mail.send(msg)
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")
+
+
+def send_email(subject, recipients, html_body, text_body=None):
+    msg = Message(subject, recipients=recipients)
+    msg.html = html_body
+    if text_body:
+        msg.body = text_body
+
+    # Send email asynchronously to not block the main thread
+    threading.Thread(target=send_async_email,
+                    args=(app.app_context(), msg)).start()
+
+
+def send_invitation_email(invitation, group_name, inviter_name):
+    subject = f"Join '{group_name}' Bible Reading Group - Invitation from {inviter_name}"
+
+    # Create links for the email
+    invitation_link = url_for('view_invitations', _external=True)
+    register_link = url_for('register', _external=True)
+
+    # HTML version with modern, vibrant styling
+    html_body = f'''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>BibleFlow Invitation</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: #333333; background-color: #f0f4f8;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 650px; margin: 20px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.12);">
+            <tr>
+                <td style="padding: 0;">
+                    <!-- Header with Gradient -->
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                            <td style="padding: 40px 0; text-align: center; background-image: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); position: relative;">
+                                <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">BibleFlow</h1>
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 6px; background-image: linear-gradient(90deg, #3B82F6, #10B981, #F59E0B);"></div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Main Content -->
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                            <td style="padding: 40px 40px 30px 40px;">
+                                <h2 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 700; color: #1F2937; letter-spacing: -0.3px;">You've Been Invited! ✨</h2>
+                                <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">Hello,</p>
+                                <p style="margin: 0 0 22px 0; font-size: 16px; line-height: 1.6; color: #4B5563;"><strong style="color: #111827;">{inviter_name}</strong> has invited you to join the Bible reading group:</p>
+
+                                <div style="margin: 0 0 30px 0; padding: 20px; background-color: #F3F4F6; border-left: 4px solid #4F46E5; border-radius: 8px;">
+                                    <p style="margin: 0; font-size: 20px; font-weight: 600; text-align: center; color: #111827;">{group_name}</p>
+                                </div>
+
+                                <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">Joining this group will help you stay accountable in your Bible reading journey and connect with others who are reading the same passages.</p>
+
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                        <td style="text-align: center; padding: 12px 0 30px 0;">
+                                            <a href="{invitation_link}" style="display: inline-block; padding: 14px 32px; background-image: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);">View Your Invitations</a>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">This invitation will expire in <span style="color: #EC4899; font-weight: 500;">7 days</span>.</p>
+
+                                <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">If you don't have a BibleFlow account yet, you can <a href="{register_link}" style="color: #4F46E5; text-decoration: none; font-weight: 500; border-bottom: 1px solid #4F46E5;">register here</a>.</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Footer -->
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                            <td style="padding: 30px 40px; text-align: center; background-color: #F9FAFB; color: #6B7280;">
+                                <p style="margin: 0 0 12px 0; font-size: 15px;">Blessings,<br><span style="font-weight: 600; color: #4B5563;">The BibleFlow Team</span></p>
+                                <div style="width: 60px; height: 2px; background-image: linear-gradient(90deg, #3B82F6, #10B981, #F59E0B); margin: 20px auto;"></div>
+                                <p style="margin: 0; font-size: 13px;">This is a legitimate invitation email sent on behalf of {inviter_name}.</p>
+                                <p style="margin: 10px 0 0 0; font-size: 13px;">If you believe you received this email in error, please disregard it.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    '''
+
+    # Plain text version for email clients that don't support HTML
+    text_body = f'''
+BibleFlow - Group Invitation
+
+Hello,
+
+{inviter_name} has invited you to join the Bible reading group: {group_name}.
+
+Joining this group will help you stay accountable in your Bible reading journey and connect with others who are reading the same passages.
+
+To accept this invitation, please visit: {invitation_link}
+
+This invitation will expire in 7 days.
+
+If you don't have a BibleFlow account yet, you can register at: {register_link}
+
+Blessings,
+The BibleFlow Team
+    '''
+
+    send_email(subject, [invitation.email], html_body, text_body)
+
+# Now update the invite_to_group route to send emails when invitations are created
 @app.route('/groups/<int:group_id>/invite', methods=['POST'])
 @login_required
 def invite_to_group(group_id):
@@ -874,6 +1011,11 @@ def invite_to_group(group_id):
                 expires_at=datetime.utcnow() + timedelta(days=7)
             )
             db.session.add(invitation)
+            db.session.flush()  # This gives the invitation an ID before commit
+
+            # Send invitation email
+            send_invitation_email(invitation, group.name, current_user.name)
+
             successful_invites += 1
 
         db.session.commit()
@@ -885,10 +1027,9 @@ def invite_to_group(group_id):
             flash(f'{failed_invites} invitation(s) were already sent.')
     except Exception as e:
         db.session.rollback()
-        flash('Error sending invitations.')
+        flash(f'Error sending invitations: {str(e)}')
 
     return redirect(url_for('view_group', group_id=group_id))
-
 
 @app.route('/invitations')
 @login_required
@@ -1234,7 +1375,9 @@ def edit_group(group_id):
         group.name = request.form.get('name')
         group.description = request.form.get('description')
         group.book = request.form.get('book')
-        group.visibility = request.form.get('visibility')
+        old_visibility = group.visibility
+        new_visibility = request.form.get('visibility')
+        group.visibility = new_visibility
 
         # Update target completion date
         target_date = request.form.get('target_date')
@@ -1247,8 +1390,62 @@ def edit_group(group_id):
             if access_code:
                 group.access_code = access_code
 
-        db.session.commit()
-        flash('Group updated successfully.')
+        # Handle invitations for invitation-only groups
+        if group.visibility == 'invitation':
+            # Get emails from form
+            emails = request.form.getlist('emails[]')
+            emails = list(set(filter(bool, emails)))  # Remove duplicates and empty emails
+
+            if emails:
+                for email in emails:
+                    # Check if user is already a member
+                    existing_member = db.session.query(User, GroupMember) \
+                        .join(GroupMember, User.id == GroupMember.user_id) \
+                        .filter(User.email == email.lower(), GroupMember.group_id == group.id) \
+                        .first()
+
+                    if existing_member:
+                        flash(f'User {email} is already a member of this group.')
+                        continue
+
+                    # Check if invitation already exists
+                    existing_invitation = GroupInvitation.query \
+                        .filter_by(group_id=group.id, email=email.lower()) \
+                        .first()
+
+                    if existing_invitation:
+                        flash(f'User {email} has already been invited.')
+                        continue
+
+                    # Create new invitation
+                    invite_code = secrets.token_hex(16)
+                    invitation = GroupInvitation(
+                        group_id=group.id,
+                        email=email.lower(),
+                        invite_code=invite_code,
+                        expires_at=datetime.utcnow() + timedelta(days=7)
+                    )
+                    db.session.add(invitation)
+
+                    # Send invitation email
+                    send_invitation_email(invitation, group.name, current_user.name)
+
+        # If visibility changed from invitation-only to something else, we might want to
+        # handle existing invitations (e.g., cancel them)
+        if old_visibility == 'invitation' and new_visibility != 'invitation':
+            # Optionally: Cancel pending invitations
+            # pending_invitations = GroupInvitation.query.filter_by(group_id=group.id).all()
+            # for invitation in pending_invitations:
+            #     db.session.delete(invitation)
+            pass
+
+        try:
+            db.session.commit()
+            flash('Group updated successfully.')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred: {str(e)}')
+
         return redirect(url_for('view_group', group_id=group_id))
 
     # Get book list for dropdown
@@ -1256,7 +1453,29 @@ def edit_group(group_id):
                                     BIBLE_VERSIONS[app.config['DEFAULT_BIBLE_VERSION']])
     bible_books = get_bible_books(version_id)
 
-    return render_template('groups/edit.html', group=group, books=bible_books)
+    # Get current members for invitation-only groups
+    members = []
+    invitations = []
+    if group.visibility == 'invitation':
+        members = GroupMember.query \
+            .join(User, GroupMember.user_id == User.id) \
+            .filter(GroupMember.group_id == group.id) \
+            .all()
+
+        invitations = GroupInvitation.query \
+            .filter_by(group_id=group.id) \
+            .filter(GroupInvitation.expires_at > datetime.utcnow()) \
+            .all()
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('groups/edit.html',
+                           group=group,
+                           books=bible_books,
+                           members=members,
+                           invitations=invitations,
+                           today=today,
+                           current_user=current_user)
+
 
 @app.route('/groups/<int:group_id>/delete', methods=['POST'])
 @login_required
@@ -1449,6 +1668,85 @@ def delete_group_reading(reading_id):
 
     flash('Group reading entry deleted successfully', 'success')
     return jsonify({'success': True})
+
+
+@app.route('/groups/<int:group_id>/members/<int:user_id>/remove', methods=['POST'])
+@login_required
+@group_creator_or_admin_required
+def remove_member(group_id, user_id):
+    group = ReadingGroup.query.get_or_404(group_id)
+
+    # Prevent removing the creator
+    if user_id == group.creator_id:
+        flash('Cannot remove the group creator.')
+        return redirect(url_for('edit_group', group_id=group_id))
+
+    # Prevent removing yourself
+    if user_id == current_user.id:
+        flash('Cannot remove yourself from the group this way.')
+        return redirect(url_for('edit_group', group_id=group_id))
+
+    # Find and remove the member
+    member = GroupMember.query.filter_by(group_id=group_id, user_id=user_id).first_or_404()
+
+    try:
+        db.session.delete(member)
+        db.session.commit()
+        flash('Member removed successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error removing member: {str(e)}')
+
+    return redirect(url_for('edit_group', group_id=group_id))
+
+
+@app.route('/invitations/<int:invitation_id>/resend', methods=['POST'])
+@login_required
+def resend_invitation(invitation_id):
+    invitation = GroupInvitation.query.get_or_404(invitation_id)
+    group = ReadingGroup.query.get_or_404(invitation.group_id)
+
+    # Check if user has permission
+    if current_user.id != group.creator_id and not current_user.is_admin:
+        flash('You do not have permission to resend invitations.')
+        return redirect(url_for('view_group', group_id=group.id))
+
+    # Update expiration and resend
+    invitation.expires_at = datetime.utcnow() + timedelta(days=7)
+
+    try:
+        db.session.commit()
+        # Resend the invitation email
+        send_invitation_email(invitation, group.name, current_user.name)
+        flash('Invitation resent successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error resending invitation: {str(e)}')
+
+    return redirect(url_for('edit_group', group_id=group.id))
+
+
+@app.route('/invitations/<int:invitation_id>/cancel', methods=['POST'])
+@login_required
+def cancel_invitation(invitation_id):
+    invitation = GroupInvitation.query.get_or_404(invitation_id)
+    group = ReadingGroup.query.get_or_404(invitation.group_id)
+
+    # Check if user has permission
+    if current_user.id != group.creator_id and not current_user.is_admin:
+        flash('You do not have permission to cancel invitations.')
+        return redirect(url_for('view_group', group_id=group.id))
+
+    try:
+        db.session.delete(invitation)
+        db.session.commit()
+        flash('Invitation cancelled successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error cancelling invitation: {str(e)}')
+
+    return redirect(url_for('edit_group', group_id=group.id))
+
 
 
 if __name__ == '__main__':
