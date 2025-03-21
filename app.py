@@ -1502,6 +1502,7 @@ def delete_group(group_id):
 
 
 # Handle Google OAuth login
+# Handle Google OAuth login
 @oauth_authorized.connect_via(google_bp)
 def google_logged_in(blueprint, token):
     if not token:
@@ -1542,7 +1543,37 @@ def google_logged_in(blueprint, token):
             if oauth.user.email.lower().strip() != google_email:
                 app.logger.warning(
                     f"Email mismatch: OAuth connected to {oauth.user.email} but Google returned {google_email}")
-                flash("Your Google email doesn't match our records. Please contact support.", category="error")
+
+                # Instead of showing an error, create a new account with this Google email
+                app.logger.info(f"Creating new user for mismatched Google email: {google_email}")
+
+                new_user = User(
+                    name=google_info.get("name", ""),
+                    email=google_email,
+                    password_hash=generate_password_hash(secrets.token_hex(16)),
+                    preferred_version='KJV'
+                )
+
+                db.session.add(new_user)
+
+                # Create new OAuth entry for this Google ID
+                new_oauth = OAuth(
+                    provider=blueprint.name,
+                    provider_user_id=google_user_id,
+                    token=token,
+                    user=new_user
+                )
+
+                db.session.add(new_oauth)
+                db.session.commit()
+
+                login_user(new_user)
+                flash("Successfully created new account with Google.")
+
+                # Update session variables
+                session['user_id'] = new_user.id
+                session['user_name'] = new_user.name
+                session['user_email'] = new_user.email
                 return False
 
             login_user(oauth.user)
@@ -1615,7 +1646,6 @@ def google_logged_in(blueprint, token):
 
     # Disable Flask-Dance's default behavior for saving the OAuth token
     return False
-
 
 # Add a Google login route
 @app.route('/login/google')
