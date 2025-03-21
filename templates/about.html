@@ -2,9 +2,649 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Eve!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #8a2be2;
+            --primary-light: #b980ff;
+            --primary-dark: #6a1fb0;
+            --accent: #ff9de2;
+            --background: #f9f7ff;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .bg-primary { background-color: var(--primary); }
+        .bg-primary-light { background-color: var(--primary-light); }
+        .bg-primary-dark { background-color: var(--primary-dark); }
+        .text-primary { color: var(--primary); }
+        .text-primary-light { color: var(--primary-light); }
+        .text-primary-dark { color: var(--primary-dark); }
+        .border-primary { border-color: var(--primary); }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, rgba(185, 128, 255, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+        }
+
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(138, 43, 226, 0.15);
+        }
+
+        .gradient-button {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .gradient-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(138, 43, 226, 0.15);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 2px;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(to right, transparent, var(--primary), transparent);
+            border-radius: 2px;
+        }
+
+        .footer-wave {
+            height: 20px;
+            background: linear-gradient(135deg, transparent 33%, var(--primary-dark) 33%, var(--primary-dark) 66%, transparent 66%);
+            background-size: 40px 20px;
+        }
+
+        .polaroid {
+            background: white;
+            padding: 15px 15px 40px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: rotate(var(--rotate, 0deg));
+            transition: all 0.3s ease;
+        }
+
+        .polaroid:hover {
+            transform: scale(1.05) rotate(var(--rotate, 0deg));
+            z-index: 10;
+            box-shadow: 0 15px 35px rgba(138, 43, 226, 0.2);
+        }
+
+        .timeline-item {
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .timeline-line {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: var(--primary-light);
+            left: 0;
+            top: 0;
+        }
+
+        .quote-card {
+            position: relative;
+        }
+
+        .quote-card::before {
+            content: '"';
+            font-size: 120px;
+            position: absolute;
+            opacity: 0.1;
+            color: var(--primary);
+            top: -20px;
+            left: 10px;
+            font-family: Georgia, serif;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .image-grid img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .image-grid img:hover {
+            transform: scale(1.03);
+            box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary);
+            opacity: 0.7;
+            animation: confetti-fall linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Navigation -->
+    <nav id="navbar" class="fixed w-full bg-white bg-opacity-95 shadow-sm py-4 px-5 z-50 flex justify-between items-center transition-all duration-300">
+        <div class="font-bold text-xl text-primary">
+            <span>Eve's Day</span>
+        </div>
+        <ul class="hidden md:flex list-none gap-10">
+            <li><a href="#home" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Home</a></li>
+            <li><a href="#gallery" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Gallery</a></li>
+            <li><a href="#timeline" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Timeline</a></li>
+            <li><a href="#quotes" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Quotes</a></li>
+            <li><a href="#wishes" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Wishes</a></li>
+            <li><a href="#photo-wall" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Photo Wall</a></li>
+            <li><a href="#message" class="text-gray-800 font-medium text-sm hover:text-primary transition-colors duration-300 py-2 nav-link">Message</a></li>
+        </ul>
+        <div id="menu-toggle" class="flex md:hidden flex-col justify-between w-7 h-5 cursor-pointer z-50">
+            <span class="block h-0.5 w-full bg-primary rounded"></span>
+            <span class="block h-0.5 w-full bg-primary rounded"></span>
+            <span class="block h-0.5 w-full bg-primary rounded"></span>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="fixed top-0 -right-full w-70 h-screen bg-white flex flex-col items-center justify-center transition-all duration-500 shadow-lg z-40 md:hidden">
+            <ul class="flex flex-col items-center gap-12">
+                <li><a href="#home" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Home</a></li>
+                <li><a href="#gallery" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Gallery</a></li>
+                <li><a href="#timeline" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Timeline</a></li>
+                <li><a href="#quotes" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Quotes</a></li>
+                <li><a href="#wishes" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Wishes</a></li>
+                <li><a href="#photo-wall" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Photo Wall</a></li>
+                <li><a href="#message" class="text-gray-800 font-medium text-lg hover:text-primary transition-colors duration-300">Message</a></li>
+            </ul>
+        </div>
+        <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden opacity-0 transition-opacity duration-300"></div>
+    </nav>
 
+    <!-- Hero Section -->
+    <section id="home" class="min-h-screen flex items-center justify-center hero-gradient px-5 pt-32 pb-24 text-center relative">
+        <div class="max-w-900 relative z-1">
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 text-primary tracking-tight inline-block relative">
+                Happy Birthday, Eve!
+                <span class="absolute bottom-[-10px] left-1/2 transform -translate-x-1/2 w-20 h-0.5 bg-gradient-to-r from-primary-light via-primary to-primary-light rounded"></span>
+            </h1>
+            <p class="text-base md:text-lg lg:text-xl mb-14 text-gray-600 max-w-600 mx-auto">
+                Celebrating your incredible journey and the wonderful person you've become
+            </p>
+            <img class="mt-10 rounded-2xl shadow-lg max-w-full h-auto mx-auto"
+                 src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCaY10QkcoNXf2jhQysv8yF5lkgNxfIe26cQ&s"
+                 alt="Birthday cake with candles" />
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+                <div class="text-center">
+                    <div class="text-5xl font-bold text-primary-dark mb-3">20</div>
+                    <p class="text-gray-600">Amazing Years</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold text-primary-dark mb-3">∞</div>
+                    <p class="text-gray-600">Beautiful Memories</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold text-primary-dark mb-3">365</div>
+                    <p class="text-gray-600">Days of New Adventures</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-40 px-5 bg-white relative">
+        <div class="absolute top-0 left-0 w-full h-100 bg-gradient-to-b from-background to-transparent z-1"></div>
+        <h2 class="text-4xl md:text-5xl font-bold mb-20 text-primary relative inline-block left-1/2 transform -translate-x-1/2 text-center section-title">
+            Beautiful Memories
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 card">
+                <img class="w-full h-280 object-cover"
+                     src="Images//gdg.jpg"
+                     alt="Memory with Eve 1" />
+                <div class="p-8 text-center text-lg text-gray-800 font-medium">
+                    Tech Bro and Tech sis?
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 card">
+                <img class="w-full h-280 object-cover"
+                     src="Images//inthecar.jpg"
+                     alt="Memory with Eve 2" />
+                <div class="p-8 text-center text-lg text-gray-800 font-medium">
+                    This was a crazy time,,getting from Yolo to school within minutes!
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 card">
+                <img class="w-full h-280 object-cover"
+                     src="Images//ardhi.jpg"
+                     alt="Memory with Eve 3" />
+                <div class="p-8 text-center text-lg text-gray-800 font-medium">
+                    Ardhi Gallery: I think they forgot to list you as a work of art
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 card">
+                <img class="w-full h-280 object-cover"
+                     src="Images//demdays.jpg"
+                     alt="Memory with Eve 4" />
+                <div class="p-8 text-center text-lg text-gray-800 font-medium">
+                    Dem days when we were young and free
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 card">
+                <img class="w-full h-280 object-cover"
+                     src="Images//iccream.jpg"
+                     alt="Memory with Eve 5" />
+                <div class="p-8 text-center text-lg text-gray-800 font-medium">
+                    Ice cream dates are the best - Tumaini with my love
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 card">
+                <img class="w-full h-280 object-cover"
+                     src="Images//westmallpork.jpg"
+                     alt="Memory with Eve 6" />
+                <div class="p-8 text-center text-lg text-gray-800 font-medium">
+                    Westmall Pork with you: The best pork in town
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline Section -->
+    <section id="timeline" class="py-40 px-5 bg-background relative">
+        <h2 class="text-4xl md:text-5xl font-bold mb-20 text-primary relative inline-block left-1/2 transform -translate-x-1/2 text-center section-title">
+            Your Journey
+        </h2>
+
+        <div class="max-w-4xl mx-auto relative">
+            <div class="timeline-line"></div>
+
+            <!-- Timeline items -->
+            <div class="ml-16 mb-20 timeline-item">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-3 text-primary-dark">First Day We Spent Time Together</h3>
+                    <p class="text-gray-700 mb-6">I remember about you joking how i made the other guys busy so i could have time with you</p>
+                    <img src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2d/44/f9/2e/caption.jpg?w=900&h=500&s=1" alt="First day" class="w-full h-auto rounded-lg" />
+                </div>
+            </div>
+
+            <div class="ml-16 mb-20 timeline-item">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-3 text-primary-dark">Karura</h3>
+                    <p class="text-gray-700 mb-6">Nature walk cause ik how much you love them,,choice of image,,? haha i like it and wont pull it down</p>
+                    <img src="Images//karura.jpg" alt="21st birthday" class="w-full h-auto rounded-lg" />
+                </div>
+            </div>
+
+            <div class="ml-16 mb-20 timeline-item">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-3 text-primary-dark">Swimming at Bees Bark</h3>
+                    <p class="text-gray-700 mb-6">Ofcourse I will put here all the photos i cant post </p>
+                    <img src="Images//Swimming.jpg" alt="Road trip" class="w-full h-auto rounded-lg" />
+                </div>
+            </div>
+
+            <div class="ml-16 mb-20 timeline-item">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-3 text-primary-dark">Today</h3>
+                    <p class="text-gray-700 mb-6">Another year older, infinitely wiser, and somehow even more amazing than before. Now,your heart please</p>
+                    <img src="Images//17.jpg" alt="Today" class="w-full h-auto rounded-lg" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quotes Section -->
+    <section id="quotes" class="py-40 px-5 bg-white">
+        <h2 class="text-4xl md:text-5xl font-bold mb-20 text-primary relative inline-block left-1/2 transform -translate-x-1/2 text-center section-title">
+            Eve's Words of Wisdom
+        </h2>
+
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div class="bg-gray-50 p-10 rounded-2xl shadow-md quote-card">
+                <p class="text-xl text-gray-700 mb-5 relative z-10">"Love is a decision, Happiness is a sacrifice"</p>
+                <div class="flex items-center">
+                    <img src="https://media.istockphoto.com/id/928845930/photo/purple-sea.jpg?s=612x612&w=0&k=20&c=iavOzI6fNkQd7jmKWpmsY4lJrCz0cFsIXOUnZgp_auk=" alt="Eve quote 1" class="w-12 h-12 rounded-full mr-4 object-cover" />
+                    <div>
+                        <p class="font-semibold text-primary">Eve</p>
+                        <p class="text-sm text-gray-500">On giving yourself up to make your partner happy.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-10 rounded-2xl shadow-md quote-card">
+                <p class="text-xl text-gray-700 mb-5 relative z-10">"You’re predisposed to various graces, yes; be eternally grateful for this. Remember that your response to the graces of God is essentially the difference between heaven, purgatory and hell. "</p>
+                <div class="flex items-center">
+                    <img src="https://media.istockphoto.com/id/928845930/photo/purple-sea.jpg?s=612x612&w=0&k=20&c=iavOzI6fNkQd7jmKWpmsY4lJrCz0cFsIXOUnZgp_auk=" alt="Eve quote 2" class="w-12 h-12 rounded-full mr-4 object-cover" />
+                    <div>
+                        <p class="font-semibold text-primary">Eve</p>
+                        <p class="text-sm text-gray-500">During Septuagisima Sunday</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-10 rounded-2xl shadow-md quote-card">
+                <p class="text-xl text-gray-700 mb-5 relative z-10">"Gratitude begets generosity "</p>
+                <div class="flex items-center">
+                    <img src="https://media.istockphoto.com/id/928845930/photo/purple-sea.jpg?s=612x612&w=0&k=20&c=iavOzI6fNkQd7jmKWpmsY4lJrCz0cFsIXOUnZgp_auk=" alt="Eve quote 3" class="w-12 h-12 rounded-full mr-4 object-cover" />
+                    <div>
+                        <p class="font-semibold text-primary">Eve</p>
+                        <p class="text-sm text-gray-500">From the feast of the holy family </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-10 rounded-2xl shadow-md quote-card">
+                <p class="text-xl text-gray-700 mb-5 relative z-10">"We live for a purpose, a goal, the biggest one being happiness. Who better to answer the question of our purpose/happiness than He who created us? "</p>
+                <div class="flex items-center">
+                    <img src="https://media.istockphoto.com/id/928845930/photo/purple-sea.jpg?s=612x612&w=0&k=20&c=iavOzI6fNkQd7jmKWpmsY4lJrCz0cFsIXOUnZgp_auk=" alt="Eve quote 4" class="w-12 h-12 rounded-full mr-4 object-cover" />
+                    <div>
+                        <p class="font-semibold text-primary">Eve</p>
+                        <p class="text-sm text-gray-500">On the Sunday of the purification of Mary</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Friends Wishes Section -->
+    <section id="wishes" class="py-40 px-5 bg-background">
+        <h2 class="text-4xl md:text-5xl font-bold mb-20 text-primary relative inline-block left-1/2 transform -translate-x-1/2 text-center section-title">
+            Some Randoms
+        </h2>
+
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-center gap-8">
+            <div class="bg-white p-6 w-80 polaroid" style="--rotate: -3deg;">
+                <img src="Images//1.jpg" alt="Friend 1" class="mb-4 w-full h-auto" />
+                <p class="text-gray-800 text-lg text-center">Happy birthday to the most amazing friend! Love you lots! </p>
+            </div>
+
+            <div class="bg-white p-6 w-80 polaroid" style="--rotate: 2deg;">
+                <img src="Images//2.jpg" alt="Friend 2" class="mb-4 w-full h-auto" />
+                <p class="text-gray-800 text-lg text-center">Wishing you all the cake, fun, and happiness today!</p>
+            </div>
+
+            <div class="bg-white p-6 w-80 polaroid" style="--rotate: -2deg;">
+                <img src="Images//4.jpg" alt="Friend 3" class="mb-4 w-full h-auto" />
+                <p class="text-gray-800 text-lg text-center">Here's to another year of your incredible shenanigans!</p>
+            </div>
+
+            <div class="bg-white p-6 w-80 polaroid" style="--rotate: 4deg;">
+                <img src="Images//18.jpg" alt="Friend 4" class="mb-4 w-full h-auto" />
+                <p class="text-gray-800 text-lg text-center">You make the world a better place just by being you! </p>
+            </div>
+
+            <div class="bg-white p-6 w-80 polaroid" style="--rotate: -4deg;">
+                <img src="Images//5.jpg" alt="Friend 5" class="mb-4 w-full h-auto" />
+                <p class="text-gray-800 text-lg text-center">To my favorite adventure buddy - happy birthday!</p>
+            </div>
+
+            <div class="bg-white p-6 w-80 polaroid" style="--rotate: 1deg;">
+                <img src="Images//6.jpg" alt="Friend 6" class="mb-4 w-full h-auto" />
+                <p class="text-gray-800 text-lg text-center">Never stop being the wonderful Yapper that you are!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Photo Wall Section -->
+    <section id="photo-wall" class="py-40 px-5 bg-white">
+        <h2 class="text-4xl md:text-5xl font-bold mb-20 text-primary relative inline-block left-1/2 transform -translate-x-1/2 text-center section-title">
+            Photo Wall
+        </h2>
+
+        <div class="max-w-7xl mx-auto image-grid">
+            <img src="Images//7.jpg" alt="Eve photo 1" />
+            <img src="Images//8.jpg" alt="Eve photo 2" />
+            <img src="Images//9.jpg" alt="Eve photo 3" />
+            <img src="Images//10.jpg" alt="Eve photo 4" />
+            <img src="Images//11.jpg" alt="Eve photo 5" />
+            <img src="Images//12.jpg" alt="Eve photo 6" />
+            <img src="Images//13.jpg" alt="Eve photo 7" />
+            <img src="Images//14.jpg" alt="Eve photo 8" />
+            <img src="Images//20.jpg" alt="Eve photo 9" />
+            <img src="Images//16.jpg" alt="Eve photo 10" />
+            <img src="Images//back.jpg" alt="Eve photo 11" />
+            <img src="Images//19.jpg" alt="Eve photo 12" />
+        </div>
+    </section>
+
+    <!-- Message Section -->
+    <section id="message" class="py-40 px-5 text-center max-w-4xl mx-auto relative">
+        <h2 class="text-4xl md:text-5xl font-bold mb-14 text-primary relative inline-block section-title">
+            A Special Message For You
+        </h2>
+
+        <p class="text-2xl mb-10 text-primary font-semibold">
+            Dear Eve, <span class="inline-block font-bold text-primary-dark relative pb-1">(my toto)</span>
+        </p>
+
+        <p class="text-lg mb-7 leading-relaxed text-gray-800">
+            On this special day, I want to celebrate the amazing person you are. Your kindness, creativity, and spirit brighten everyone's lives around you.
+        </p>
+
+        <p class="text-lg mb-7 leading-relaxed text-gray-800">
+            May your day be filled with all the purple things you love, laughter that makes your heart sing, and moments that become treasured memories.
+        </p>
+
+        <p class="text-lg mb-7 leading-relaxed text-gray-800">
+            Here's to another incredible year of growth, adventure, and happiness!
+        </p>
+
+        <p class="text-lg mb-7 leading-relaxed text-gray-800">
+            With love and best wishes,
+        </p>
+
+        <p class="text-lg mb-16 leading-relaxed text-gray-800">
+            <strong>Yours</strong>
+        </p>
+
+        <a href="#" id="surprise-button" class="inline-block gradient-button text-white py-5 px-12 rounded-full font-semibold mt-6 shadow-lg relative overflow-hidden z-1 tracking-wider">
+            Click For Your Surprise!
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-primary-dark to-purple-900 text-white text-center py-12 relative overflow-hidden">
+        <div class="footer-wave absolute top-0 left-0 w-full"></div>
+        <p>
+            Made with ♥ for Eve's Birthday 2025
+        </p>
+    </footer>
+
+    <!-- JavaScript for interactivity -->
+    <script>
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const overlay = document.getElementById('overlay');
+
+        menuToggle.addEventListener('click', () => {
+            toggleMobileMenu();
+        });
+
+        overlay.addEventListener('click', () => {
+            toggleMobileMenu(false);
+        });
+
+        function toggleMobileMenu(show = null) {
+            const isActive = show === null ? mobileMenu.classList.contains('right-0') : !show;
+
+            if (isActive) {
+                // Close menu
+                mobileMenu.classList.remove('right-0');
+                mobileMenu.classList.add('-right-full');
+                overlay.classList.add('hidden', 'opacity-0');
+            } else {
+                // Open menu
+                mobileMenu.classList.remove('-right-full');
+                mobileMenu.classList.add('right-0');
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+            }
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Close mobile menu if open
+                toggleMobileMenu(false);
+
+                // Scroll to the target section
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Navigation color change on scroll
+        const nav = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.remove('py-4');
+                nav.classList.add('py-3', 'shadow-md');
+            } else {
+                nav.classList.remove('py-3', 'shadow-md');
+                nav.classList.add('py-4');
+            }
+        });
+
+        // Surprise button confetti effect
+        const surpriseButton = document.getElementById('surprise-button');
+
+        surpriseButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            createConfetti();
+
+            // Create a special birthday message
+            const birthdayMessage = document.createElement('div');
+            birthdayMessage.className = 'fixed inset-0 flex items-center justify-center z-50';
+            birthdayMessage.innerHTML = `
+                <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg text-center relative z-10 transform transition-all duration-500 scale-0">
+                    <h3 class="text-3xl font-bold text-primary mb-6">Your Surprise!</h3>
+                    <p class="text-xl mb-4">Happy Birthday Eve!</p>
+                    <p class="mb-8">This special day is just the beginning of an amazing year ahead. May all your dreams come true!</p>
+                    <div class="flex justify-center">
+                        <button id="close-message" class="gradient-button text-white py-3 px-8 rounded-full font-medium shadow-lg">Thank You!</button>
+                    </div>
+                </div>
+                <div class="fixed inset-0 bg-black bg-opacity-70 z-0"></div>
+            `;
+
+            document.body.appendChild(birthdayMessage);
+
+            // Animate the message
+            setTimeout(() => {
+                birthdayMessage.querySelector('div:first-child').classList.remove('scale-0');
+                birthdayMessage.querySelector('div:first-child').classList.add('scale-100');
+            }, 100);
+
+            // Close button functionality
+            document.getElementById('close-message').addEventListener('click', () => {
+                birthdayMessage.querySelector('div:first-child').classList.remove('scale-100');
+                birthdayMessage.querySelector('div:first-child').classList.add('scale-0');
+                setTimeout(() => {
+                    birthdayMessage.remove();
+                }, 500);
+            });
+        });
+
+        // Confetti animation function
+        function createConfetti() {
+            const colors = ['#8a2be2', '#b980ff', '#6a1fb0', '#ff9de2'];
+            const confettiCount = 200;
+
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+
+                // Random position, size, color and rotation
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+
+                document.body.appendChild(confetti);
+
+                // Remove confetti after animation
+                confetti.addEventListener('animationend', () => {
+                    confetti.remove();
+                });
+            }
+        }
+
+        // Create initial confetti on page load
+        window.addEventListener('load', () => {
+            setTimeout(createConfetti, 1000);
+        });
+    </script>
 </body>
 </html>

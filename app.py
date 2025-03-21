@@ -1510,76 +1510,66 @@ def google_logged_in(blueprint, token):
 
     resp = blueprint.session.get("/oauth2/v1/userinfo")
     if not resp.ok:
-        msg = "Failed to fetch user info from Google."
-        flash(msg, category="error")
+        flash("Failed to fetch user info from Google.", category="error")
         return False
 
     google_info = resp.json()
     google_user_id = google_info["id"]
+    google_email = google_info["email"]
 
-    # Find this OAuth token in the database, or create it
-    query = OAuth.query.filter_by(
-        provider=blueprint.name,
-        provider_user_id=google_user_id,
-    )
-    try:
-        oauth = query.one()
-    except NoResultFound:
-        oauth = OAuth(
-            provider=blueprint.name,
-            provider_user_id=google_user_id,
-            token=token,
-        )
+    # Check if an OAuth record exists for this Google user
+    existing_oauth = OAuth.query.filter_by(provider=blueprint.name, provider_user_id=google_user_id).first()
 
-    if oauth.user:
-        # If this OAuth token has a user, log them in
-        login_user(oauth.user)
+    # Check if a user exists with the same email
+    existing_user = User.query.filter_by(email=google_email).first()
+
+    if existing_oauth:
+        # If an OAuth record exists, log in the associated user
+        login_user(existing_oauth.user)
         flash("Successfully signed in with Google.")
+        user = existing_oauth.user
 
-        # Update session variables
-        session['user_id'] = oauth.user.id
-        session['user_name'] = oauth.user.name
-        session['user_email'] = oauth.user.email
+    elif existing_user:
+        # Check if this email is already linked to a different Google ID
+        other_oauth = OAuth.query.filter_by(user=existing_user, provider=blueprint.name).first()
+        if other_oauth and other_oauth.provider_user_id != google_user_id:
+            flash("This email is already associated with a different Google account.", category="error")
+            return redirect(url_for("login"))
+
+        # Link the existing user to this new OAuth account
+        new_oauth = OAuth(provider=blueprint.name, provider_user_id=google_user_id, token=token, user=existing_user)
+        db.session.add(new_oauth)
+        db.session.commit()
+
+        login_user(existing_user)
+        flash("Successfully signed in with Google.")
+        user = existing_user
 
     else:
-        # If no user is associated with this token, check if the email exists
-        user = User.query.filter_by(email=google_info["email"]).first()
+        # Create a new user and OAuth entry
+        new_user = User(
+            name=google_info.get("name", ""),
+            email=google_email,
+            password_hash=generate_password_hash(secrets.token_hex(16)),  # Secure random password
+            preferred_version='KJV'  # Default preference
+        )
+        db.session.add(new_user)
+        db.session.flush()  # Get new_user.id before committing
 
-        if user:
-            # Connect the existing account to this OAuth token
-            oauth.user = user
-            db.session.add(oauth)
-            db.session.commit()
-            login_user(user)
-            flash("Successfully signed in with Google.")
+        new_oauth = OAuth(provider=blueprint.name, provider_user_id=google_user_id, token=token, user=new_user)
+        db.session.add(new_oauth)
+        db.session.commit()
 
-            # Update session variables
-            session['user_id'] = user.id
-            session['user_name'] = user.name
-            session['user_email'] = user.email
-        else:
-            # Create a new user account with information from Google
-            user = User(
-                name=google_info["name"],
-                email=google_info["email"],
-                password_hash=generate_password_hash(secrets.token_hex(16)),  # Random secure password
-                preferred_version='KJV'  # Default Bible version
-            )
-            db.session.add(user)
-            oauth.user = user
-            db.session.add(oauth)
-            db.session.commit()
-            login_user(user)
-            flash("Successfully signed in with Google.")
+        login_user(new_user)
+        flash("Successfully signed in with Google.")
+        user = new_user
 
-            # Update session variables
-            session['user_id'] = user.id
-            session['user_name'] = user.name
-            session['user_email'] = user.email
+    # Update session variables
+    session['user_id'] = user.id
+    session['user_name'] = user.name
+    session['user_email'] = user.email
 
-    # Disable Flask-Dance's default behavior for saving the OAuth token
-    return False
-
+    return False  # Prevent Flask-Dance from auto-storing the token
 
 # Add a Google login route
 @app.route('/login/google')
