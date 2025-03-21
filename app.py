@@ -1510,66 +1510,112 @@ def google_logged_in(blueprint, token):
 
     resp = blueprint.session.get("/oauth2/v1/userinfo")
     if not resp.ok:
-        flash("Failed to fetch user info from Google.", category="error")
+        msg = f"Failed to fetch user info from Google. Status: {resp.status_code}"
+        flash(msg, category="error")
         return False
 
     google_info = resp.json()
     google_user_id = google_info["id"]
-    google_email = google_info["email"]
+    google_email = google_info.get("email", "").lower().strip()
 
-    # Check if an OAuth record exists for this Google user
-    existing_oauth = OAuth.query.filter_by(provider=blueprint.name, provider_user_id=google_user_id).first()
+    # Log OAuth attempt for debugging
+    app.logger.info(f"Google OAuth login attempt with email: {google_email}, Google ID: {google_user_id}")
 
-    # Check if a user exists with the same email
-    existing_user = User.query.filter_by(email=google_email).first()
+    if not google_email:
+        flash("Google account did not provide an email address.", category="error")
+        return False
 
-    if existing_oauth:
-        # If an OAuth record exists, log in the associated user
-        login_user(existing_oauth.user)
-        flash("Successfully signed in with Google.")
-        user = existing_oauth.user
+    # First, check if this Google ID is already associated with a user
+    query = OAuth.query.filter_by(
+        provider=blueprint.name,
+        provider_user_id=google_user_id,
+    )
 
-    elif existing_user:
-        # Check if this email is already linked to a different Google ID
-        other_oauth = OAuth.query.filter_by(user=existing_user, provider=blueprint.name).first()
-        if other_oauth and other_oauth.provider_user_id != google_user_id:
-            flash("This email is already associated with a different Google account.", category="error")
-            return redirect(url_for("login"))
+    try:
+        oauth = query.one()
+        # If this OAuth token has a user, log them in
+        if oauth.user:
+            app.logger.info(
+                f"Found existing OAuth connection for Google ID: {google_user_id}, user: {oauth.user.email}")
 
-        # Link the existing user to this new OAuth account
-        new_oauth = OAuth(provider=blueprint.name, provider_user_id=google_user_id, token=token, user=existing_user)
-        db.session.add(new_oauth)
-        db.session.commit()
+            # Verify the emails still match as an additional security check
+            if oauth.user.email.lower().strip() != google_email:
+                app.logger.warning(
+                    f"Email mismatch: OAuth connected to {oauth.user.email} but Google returned {google_email}")
+                flash("Your Google email doesn't match our records. Please contact support.", category="error")
+                return False
 
-        login_user(existing_user)
-        flash("Successfully signed in with Google.")
-        user = existing_user
+            login_user(oauth.user)
+            flash("Successfully signed in with Google.")
 
+            # Update session variables
+            session['user_id'] = oauth.user.id
+            session['user_name'] = oauth.user.name
+            session['user_email'] = oauth.user.email
+            return False
+    except NoResultFound:
+        # No existing OAuth found, create a new one later
+        oauth = None
+
+    # At this point, either there's no OAuth entry or it exists but has no user
+    # Check if a user exists with this email
+    user = User.query.filter(func.lower(User.email) == google_email).first()
+
+    if user:
+        app.logger.info(f"Found existing user with email: {google_email}")
+
+        # User exists but no OAuth connection exists yet
+        if oauth is None:
+            oauth = OAuth(
+                provider=blueprint.name,
+                provider_user_id=google_user_id,
+                token=token,
+            )
+
+        # Instead of automatically connecting, send to a confirmation page
+        # Store temporary data in session
+        session['pending_oauth_id'] = google_user_id
+        session['pending_oauth_email'] = google_email
+        session['pending_oauth_token'] = token
+
+        # Redirect to confirmation page
+        flash("Please confirm you want to connect your Google account.", category="info")
+        return redirect(url_for('confirm_google_connection'))
     else:
-        # Create a new user and OAuth entry
-        new_user = User(
+        # Create a new user - no existing account with this email
+        app.logger.info(f"Creating new user with Google email: {google_email}")
+
+        user = User(
             name=google_info.get("name", ""),
             email=google_email,
-            password_hash=generate_password_hash(secrets.token_hex(16)),  # Secure random password
-            preferred_version='KJV'  # Default preference
+            password_hash=generate_password_hash(secrets.token_hex(16)),  # Random secure password
+            preferred_version='KJV'  # Default Bible version
         )
-        db.session.add(new_user)
-        db.session.flush()  # Get new_user.id before committing
 
-        new_oauth = OAuth(provider=blueprint.name, provider_user_id=google_user_id, token=token, user=new_user)
-        db.session.add(new_oauth)
+        db.session.add(user)
+
+        # Create new OAuth entry
+        oauth = OAuth(
+            provider=blueprint.name,
+            provider_user_id=google_user_id,
+            token=token,
+            user=user
+        )
+
+        db.session.add(oauth)
         db.session.commit()
 
-        login_user(new_user)
-        flash("Successfully signed in with Google.")
-        user = new_user
+        login_user(user)
+        flash("Successfully created new account with Google.")
 
-    # Update session variables
-    session['user_id'] = user.id
-    session['user_name'] = user.name
-    session['user_email'] = user.email
+        # Update session variables
+        session['user_id'] = user.id
+        session['user_name'] = user.name
+        session['user_email'] = user.email
 
-    return False  # Prevent Flask-Dance from auto-storing the token
+    # Disable Flask-Dance's default behavior for saving the OAuth token
+    return False
+
 
 # Add a Google login route
 @app.route('/login/google')
@@ -1577,6 +1623,66 @@ def google_login():
     if not google.authorized:
         return redirect(url_for('google.login'))
     return redirect(url_for('home'))
+
+
+# Add confirmation route for connecting Google account
+@app.route('/confirm-google-connection', methods=['GET', 'POST'])
+def confirm_google_connection():
+    # Check if we have pending OAuth data
+    if not all(k in session for k in ['pending_oauth_id', 'pending_oauth_email', 'pending_oauth_token']):
+        flash("No pending Google connection found.", category="error")
+        return redirect(url_for('login'))
+
+    google_user_id = session['pending_oauth_id']
+    google_email = session['pending_oauth_email']
+    token = session['pending_oauth_token']
+
+    # Find the user with this email
+    user = User.query.filter(func.lower(User.email) == google_email.lower()).first()
+
+    if not user:
+        flash("User account not found.", category="error")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # User confirmed the connection
+        if 'confirm' in request.form:
+            # Create the OAuth connection
+            oauth = OAuth(
+                provider="google",
+                provider_user_id=google_user_id,
+                token=token,
+                user=user
+            )
+
+            db.session.add(oauth)
+            db.session.commit()
+
+            # Clean up session
+            for key in ['pending_oauth_id', 'pending_oauth_email', 'pending_oauth_token']:
+                session.pop(key, None)
+
+            # Log in the user
+            login_user(user)
+            flash("Successfully connected Google account.", category="success")
+
+            # Update session variables
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            session['user_email'] = user.email
+
+            return redirect(url_for('home'))
+        else:
+            # User cancelled
+            for key in ['pending_oauth_id', 'pending_oauth_email', 'pending_oauth_token']:
+                session.pop(key, None)
+
+            flash("Google account connection cancelled.", category="info")
+            return redirect(url_for('login'))
+
+    # GET request - show confirmation page
+    return render_template('confirm_google_connection.html', email=google_email)
+
 
 # Debug code to add temporarily
 # print(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
